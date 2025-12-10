@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'booking_screen.dart';
+import 'booking.dart';
 
 // Halaman Detail Paket Wisata
 class DetailPaketScreen extends StatelessWidget {

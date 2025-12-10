@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'destinasi_wisata_screen.dart';
-import 'paket_wisata_screen.dart';
-import 'profile_screen.dart';
-import 'favorite_screen.dart';
-import 'promo_list_screen.dart';
-import 'blog_wisata_screen.dart';
+import 'rekomendasi_gaya_foto.dart';
+import 'paket_wisata.dart';
+import 'profile.dart';
+import 'favorite.dart';
+import 'promo_list.dart';
+import 'blog_wisata.dart';
 
 // Halaman Home/Beranda
 class HomeScreen extends StatefulWidget {
@@ -131,16 +131,16 @@ class BerandaPage extends StatelessWidget {
                 crossAxisSpacing: 15,
                 mainAxisSpacing: 15,
                 children: [
-                  // Menu Destinasi Wisata
+                  // Menu Rekomendasi Gaya Foto
                   MenuCard(
-                    icon: Icons.place,
-                    title: 'Destinasi Wisata',
-                    color: Colors.orange,
+                    icon: Icons.camera_alt,
+                    title: 'Rekomendasi Gaya Foto',
+                    color: Colors.purple,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const DestinasiWisataScreen(),
+                          builder: (context) => const RekomendasiGayaFotoScreen(),
                         ),
                       );
                     },
@@ -193,14 +193,14 @@ class BerandaPage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Section Destinasi Populer
+            // Section Tips Fotografi
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Destinasi Populer',
+                    'Tips Fotografi',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   TextButton(
@@ -208,7 +208,7 @@ class BerandaPage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const DestinasiWisataScreen(),
+                          builder: (context) => const RekomendasiGayaFotoScreen(),
                         ),
                       );
                     },
@@ -218,30 +218,27 @@ class BerandaPage extends StatelessWidget {
               ),
             ),
 
-            // List Destinasi Populer (Horizontal Scroll)
+            // List Tips Fotografi (Horizontal Scroll)
             SizedBox(
               height: 200,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 children: [
-                  DestinasiCard(
-                    nama: 'Pantai Kuta',
-                    lokasi: 'Bali',
-                    harga: 'Rp 150.000',
-                    rating: 4.5,
+                  TipsFotoCard(
+                    nama: 'Candid Natural',
+                    kategori: 'Outdoor',
+                    icon: Icons.nature_people,
                   ),
-                  DestinasiCard(
-                    nama: 'Bromo',
-                    lokasi: 'Jawa Timur',
-                    harga: 'Rp 200.000',
-                    rating: 4.8,
+                  TipsFotoCard(
+                    nama: 'Aesthetic Minimalis',
+                    kategori: 'Indoor/Outdoor',
+                    icon: Icons.palette,
                   ),
-                  DestinasiCard(
-                    nama: 'Raja Ampat',
-                    lokasi: 'Papua',
-                    harga: 'Rp 500.000',
-                    rating: 4.9,
+                  TipsFotoCard(
+                    nama: 'Siluet Sunset',
+                    kategori: 'Outdoor',
+                    icon: Icons.wb_sunny,
                   ),
                 ],
               ),
@@ -303,19 +300,17 @@ class MenuCard extends StatelessWidget {
   }
 }
 
-// Widget Card untuk Destinasi
-class DestinasiCard extends StatelessWidget {
+// Widget Card untuk Tips Foto
+class TipsFotoCard extends StatelessWidget {
   final String nama;
-  final String lokasi;
-  final String harga;
-  final double rating;
+  final String kategori;
+  final IconData icon;
 
-  const DestinasiCard({
+  const TipsFotoCard({
     super.key,
     required this.nama,
-    required this.lokasi,
-    required this.harga,
-    required this.rating,
+    required this.kategori,
+    required this.icon,
   });
 
   @override
@@ -337,18 +332,22 @@ class DestinasiCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Gambar (menggunakan placeholder)
+          // Icon Section
           Container(
             height: 100,
             decoration: BoxDecoration(
-              color: Colors.blue[200],
+              gradient: LinearGradient(
+                colors: [Colors.purple[300]!, Colors.purple[600]!],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(15),
                 topRight: Radius.circular(15),
               ),
             ),
-            child: const Center(
-              child: Icon(Icons.image, size: 50, color: Colors.white),
+            child: Center(
+              child: Icon(icon, size: 50, color: Colors.white),
             ),
           ),
           // Info
@@ -369,37 +368,33 @@ class DestinasiCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                    const Icon(Icons.category, size: 14, color: Colors.grey),
                     const SizedBox(width: 4),
-                    Text(
-                      lokasi,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    Expanded(
+                      child: Text(
+                        kategori,
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      harga,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[700],
-                      ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.purple[50],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Lihat Tips',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.purple[700],
+                      fontWeight: FontWeight.w600,
                     ),
-                    Row(
-                      children: [
-                        Icon(Icons.star, size: 14, color: Colors.amber[700]),
-                        const SizedBox(width: 2),
-                        Text(
-                          rating.toString(),
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -409,3 +404,4 @@ class DestinasiCard extends StatelessWidget {
     );
   }
 }
+

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pembayaran_screen.dart';
+import 'pembayaran.dart';
 
 // Halaman Booking
 class BookingScreen extends StatefulWidget {

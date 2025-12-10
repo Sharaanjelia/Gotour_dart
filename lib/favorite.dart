@@ -9,24 +9,34 @@ class FavoriteScreen extends StatefulWidget {
 }
 
 class _FavoriteScreenState extends State<FavoriteScreen> {
-  // Data dummy favorit
+  // Data favorit paket wisata
   final List<Map<String, dynamic>> favoriteList = [
     {
-      'nama': 'Pantai Kuta',
-      'lokasi': 'Bali',
-      'harga': 'Rp 150.000',
-      'rating': 4.5,
-    },
-    {
-      'nama': 'Gunung Bromo',
-      'lokasi': 'Jawa Timur',
-      'harga': 'Rp 200.000',
+      'nama': 'Barusan Hills Satu',
+      'lokasi': 'Ciwidey',
+      'harga': 'Rp 1.500.000',
+      'durasi': '2 Hari 1 Malam',
       'rating': 4.8,
     },
     {
-      'nama': 'Raja Ampat',
-      'lokasi': 'Papua',
-      'harga': 'Rp 500.000',
+      'nama': 'Ciwidey Valley',
+      'lokasi': 'Ciwidey',
+      'harga': 'Rp 1.000.000',
+      'durasi': '3 Hari 2 Malam',
+      'rating': 4.7,
+    },
+    {
+      'nama': 'The Lodge Maribaya',
+      'lokasi': 'Lembang',
+      'harga': 'Rp 350.000',
+      'durasi': '2 Hari 1 Malam',
+      'rating': 4.8,
+    },
+    {
+      'nama': 'Kawah Putih Ciwidey',
+      'lokasi': 'Ciwidey',
+      'harga': 'Rp 350.000',
+      'durasi': '2 Hari 1 Malam',
       'rating': 4.9,
     },
   ];
@@ -111,6 +121,20 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                   const SizedBox(width: 4),
                                   Text(
                                     item['lokasi'],
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Icon(
+                                    Icons.access_time,
+                                    size: 14,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    item['durasi'],
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey[600],

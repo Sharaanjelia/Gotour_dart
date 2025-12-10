@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart';
+import 'splash.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,8 +20,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      // Halaman pertama yang ditampilkan adalah Login
-      home: const LoginScreen(),
+      // Halaman pertama yang ditampilkan adalah Splash Screen
+      home: const SplashScreen(),
     );
   }
 }

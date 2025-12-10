@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'detail_destinasi_screen.dart';
+import 'detail_destinasi.dart';
 
 // Halaman Destinasi Wisata
 class DestinasiWisataScreen extends StatelessWidget {
