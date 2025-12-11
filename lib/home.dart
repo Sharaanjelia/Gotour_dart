@@ -3,8 +3,9 @@ import 'rekomendasi_gaya_foto.dart';
 import 'paket_wisata.dart';
 import 'profile.dart';
 import 'favorite.dart';
-import 'promo_list.dart';
+// import 'promo_list.dart';
 import 'blog_wisata.dart';
+import 'destinasi_wisata.dart';
 
 // Halaman Home/Beranda
 class HomeScreen extends StatefulWidget {
@@ -21,6 +22,8 @@ class _HomeScreenState extends State<HomeScreen> {
   // Daftar halaman untuk bottom navigation
   final List<Widget> pages = [
     const BerandaPage(),
+    const PaketWisataScreen(),
+    const BookingPlaceholder(),
     const FavoriteScreen(),
     const ProfileScreen(),
   ];
@@ -38,8 +41,13 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
         selectedItemColor: Colors.blue[700],
+        unselectedItemColor: Colors.grey[600],
+        type: BottomNavigationBarType.fixed,
+        showUnselectedLabels: true,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Beranda'),
+          BottomNavigationBarItem(icon: Icon(Icons.card_travel), label: 'Paket'),
+          BottomNavigationBarItem(icon: Icon(Icons.book_online), label: 'Booking'),
           BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorit'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
         ],
@@ -56,197 +64,307 @@ class BerandaPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text('GoTour'),
-        backgroundColor: Colors.blue[700],
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Notifikasi')));
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade700, Colors.blue.shade400],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text('Hi, Aqila 👋',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold)),
+                            SizedBox(height: 6),
+                            Text('Mau jalan-jalan kemana hari ini?',
+                                style: TextStyle(color: Colors.white70)),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: () {},
+                          icon: const Icon(Icons.notifications, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Search
+                    Container(
+                      margin: const EdgeInsets.only(top: 6),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Cari destinasi atau paket wisata...',
+                          prefixIcon: const Icon(Icons.search),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Menu icons (3 x 2)
+                    SizedBox(
+                      height: 120,
+                      child: GridView.count(
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 3,
+                        childAspectRatio: 1,
+                        padding: EdgeInsets.zero,
+                        mainAxisSpacing: 6,
+                        crossAxisSpacing: 8,
+                        children: [
+                          SmallMenu(icon: Icons.card_travel, title: 'Paket Wisata', onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const PaketWisataScreen())); }),
+                          SmallMenu(icon: Icons.place, title: 'Destinasi Wisata', onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const DestinasiWisataScreen())); }),
+                          SmallMenu(icon: Icons.calendar_today, title: 'Itinerary', onTap: () {}),
+                          SmallMenu(icon: Icons.recommend, title: 'Rekomendasi', onTap: () {}),
+                          SmallMenu(icon: Icons.camera_alt, title: 'Gaya Foto', onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const RekomendasiGayaFotoScreen())); }),
+                          SmallMenu(icon: Icons.article, title: 'Blog Wisata', onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const BlogWisataScreen())); }),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // Promo & Diskon
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Promo & Diskon', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    TextButton(onPressed: () {}, child: const Text('Lihat Semua')),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 130,
+                child: PromoCarousel(),
+              ),
+
+              const SizedBox(height: 18),
+
+              // Destinasi Paling Banyak Dipesan
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Destinasi Paling Banyak Dipesan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    TextButton(onPressed: () {}, child: const Text('Lihat Semua')),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 150,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: const [
+                    DestinationCard(title: 'Gunung & Alam', color: Colors.lightBlue),
+                    DestinationCard(title: 'Sawah & Alam', color: Colors.green),
+                    DestinationCard(title: 'Pantai Eksotis', color: Colors.orange),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Small menu icon used in header
+class SmallMenu extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  const SmallMenu({super.key, required this.icon, required this.title, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)]),
+            padding: const EdgeInsets.all(10),
+            child: Icon(icon, color: Colors.blue[700]),
+          ),
+          const SizedBox(height: 8),
+          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+    );
+  }
+}
+
+// Promo carousel widget
+class PromoCarousel extends StatefulWidget {
+  const PromoCarousel({super.key});
+
+  @override
+  State<PromoCarousel> createState() => _PromoCarouselState();
+}
+
+class _PromoCarouselState extends State<PromoCarousel> {
+  final PageController _controller = PageController(viewportFraction: 0.9);
+  int _page = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final promos = [
+      Colors.blue.shade600,
+      Colors.green.shade500,
+      Colors.purple.shade400,
+    ];
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 100,
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: promos.length,
+            onPageChanged: (i) => setState(() => _page = i),
+            itemBuilder: (context, index) {
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [promos[index], promos[index].withOpacity(0.8)]),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(14.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Text('Diskon 50% Paket Wisata Bandung', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            SizedBox(height: 6),
+                            Text('Berlaku hingga 31 Desember 2025', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(12)),
+                        child: const Icon(Icons.local_offer, color: Colors.white, size: 34),
+                      ),
+                    ],
+                  ),
+                ),
+              );
             },
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            promos.length,
+            (i) => Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: _page == i ? 12 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: _page == i ? Colors.blue[700] : Colors.grey[300],
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class DestinationCard extends StatelessWidget {
+  final String title;
+  final Color color;
+  const DestinationCard({super.key, required this.title, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 220,
+      margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.15), blurRadius: 6)],
+      ),
+      child: Row(
+        children: [
+          Container(width: 100, height: 150, decoration: BoxDecoration(color: color, borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12)))),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  const Text('Dipesan ribuan pengguna', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                ],
+              ),
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header dengan search
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.blue[700],
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Selamat Datang!',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Mau jalan-jalan kemana hari ini?',
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
-                  ),
-                  const SizedBox(height: 20),
-                  // Search Bar
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Cari destinasi wisata...',
-                      prefixIcon: const Icon(Icons.search),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    );
+  }
+}
 
-            const SizedBox(height: 20),
+class BookingPlaceholder extends StatelessWidget {
+  const BookingPlaceholder({super.key});
 
-            // Menu Grid
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 15,
-                mainAxisSpacing: 15,
-                children: [
-                  // Menu Rekomendasi Gaya Foto
-                  MenuCard(
-                    icon: Icons.camera_alt,
-                    title: 'Rekomendasi Gaya Foto',
-                    color: Colors.purple,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RekomendasiGayaFotoScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  // Menu Paket Wisata
-                  MenuCard(
-                    icon: Icons.card_travel,
-                    title: 'Paket Wisata',
-                    color: Colors.green,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PaketWisataScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  // Menu Promo
-                  MenuCard(
-                    icon: Icons.local_offer,
-                    title: 'Promo',
-                    color: Colors.red,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PromoListScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  // Menu Blog Wisata
-                  MenuCard(
-                    icon: Icons.article,
-                    title: 'Blog Wisata',
-                    color: Colors.purple,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const BlogWisataScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Section Tips Fotografi
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Tips Fotografi',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RekomendasiGayaFotoScreen(),
-                        ),
-                      );
-                    },
-                    child: const Text('Lihat Semua'),
-                  ),
-                ],
-              ),
-            ),
-
-            // List Tips Fotografi (Horizontal Scroll)
-            SizedBox(
-              height: 200,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: [
-                  TipsFotoCard(
-                    nama: 'Candid Natural',
-                    kategori: 'Outdoor',
-                    icon: Icons.nature_people,
-                  ),
-                  TipsFotoCard(
-                    nama: 'Aesthetic Minimalis',
-                    kategori: 'Indoor/Outdoor',
-                    icon: Icons.palette,
-                  ),
-                  TipsFotoCard(
-                    nama: 'Siluet Sunset',
-                    kategori: 'Outdoor',
-                    icon: Icons.wb_sunny,
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-          ],
-        ),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Booking'), backgroundColor: Colors.blue[700]),
+      body: const Center(
+        child: Text('Halaman Booking (kosong). Ketuk paket untuk memulai booking.'),
       ),
     );
   }
