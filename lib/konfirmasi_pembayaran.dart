@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home.dart';
+import 'itinerary.dart';
+import 'e_tiket.dart';
 
 // Halaman Konfirmasi Pembayaran
 class KonfirmasiPembayaranScreen extends StatelessWidget {
@@ -107,6 +109,66 @@ class KonfirmasiPembayaranScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 40),
+
+                // Tombol E-Tiket
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ETiketScreen(
+                            namaTempat: namaTempat,
+                            totalHarga: totalHarga,
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.confirmation_number),
+                    label: const Text(
+                      'Lihat E-Tiket',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Tombol Lihat Itinerary
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ItineraryScreen(),
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.blue[700],
+                      side: BorderSide(color: Colors.blue[700]!, width: 2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Lihat Itinerary',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
 
                 // Tombol Kembali ke Home
                 SizedBox(

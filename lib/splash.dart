@@ -55,10 +55,15 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.location_on,
-                  size: 60,
-                  color: Color(0xFF667EEA),
+                child: CustomPaint(
+                  painter: GlobePainter(),
+                  child: const Center(
+                    child: Icon(
+                      Icons.airplanemode_active,
+                      size: 40,
+                      color: Color(0xFF667EEA),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 30),
@@ -88,4 +93,54 @@ class _SplashScreenState extends State<SplashScreen> {
       ),
     );
   }
+}
+
+// Custom Painter untuk Globe Logo
+class GlobePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF667EEA).withOpacity(0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width * 0.35;
+
+    // Draw globe circles
+    canvas.drawCircle(center, radius, paint);
+
+    // Draw latitude lines
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      0,
+      3.14 * 2,
+      false,
+      paint,
+    );
+
+    // Draw vertical line (longitude)
+    final path = Path();
+    path.moveTo(center.dx, center.dy - radius);
+    path.quadraticBezierTo(
+      center.dx + radius * 0.3,
+      center.dy,
+      center.dx,
+      center.dy + radius,
+    );
+    canvas.drawPath(path, paint);
+
+    final path2 = Path();
+    path2.moveTo(center.dx, center.dy - radius);
+    path2.quadraticBezierTo(
+      center.dx - radius * 0.3,
+      center.dy,
+      center.dx,
+      center.dy + radius,
+    );
+    canvas.drawPath(path2, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

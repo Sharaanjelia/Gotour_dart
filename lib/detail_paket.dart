@@ -8,6 +8,7 @@ class DetailPaketScreen extends StatelessWidget {
   final String durasi;
   final double rating;
   final String deskripsi;
+  final String? gambar;
 
   const DetailPaketScreen({
     super.key,
@@ -16,6 +17,7 @@ class DetailPaketScreen extends StatelessWidget {
     required this.durasi,
     required this.rating,
     required this.deskripsi,
+    this.gambar,
   });
 
   @override
@@ -46,15 +48,29 @@ class DetailPaketScreen extends StatelessWidget {
                 children: [
                   // Gambar paket
                   Container(
-                    height: 250,
-                    decoration: BoxDecoration(color: Colors.green[300]),
-                    child: const Center(
-                      child: Icon(
-                        Icons.card_travel,
-                        size: 100,
-                        color: Colors.white,
-                      ),
-                    ),
+                    height: 280,
+                    width: double.infinity,
+                    child: gambar != null
+                        ? Image.asset(
+                            gambar!,
+                            width: double.infinity,
+                            height: 280,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.green[300],
+                                child: const Center(
+                                  child: Icon(Icons.image, size: 80, color: Colors.white),
+                                ),
+                              );
+                            },
+                          )
+                        : Container(
+                            color: Colors.green[300],
+                            child: const Center(
+                              child: Icon(Icons.image, size: 80, color: Colors.white),
+                            ),
+                          ),
                   ),
 
                   // Info Paket

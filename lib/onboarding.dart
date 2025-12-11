@@ -25,20 +25,29 @@ class OnboardingScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Spacer(),
-                // Logo dengan circle background
-                Container(
-                  width: 150,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.location_on,
-                      size: 80,
-                      color: Colors.white,
-                    ),
+                // Rounded Image
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: Image.asset(
+                    'assets/images/Ciwidey Valley Hot Spring Waterpark Resort.jpg',
+                    width: 280,
+                    height: 200,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 280,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(32),
+                        ),
+                        child: const Icon(
+                          Icons.location_on,
+                          size: 80,
+                          color: Colors.white,
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 50),
@@ -56,7 +65,7 @@ class OnboardingScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 // Deskripsi
                 const Text(
-                  'Jelajahi ribuan destinasi wisata terbaik di\nIndonesia dengan mudah dan aman bersama\nGoTour',
+                  'Jelajahi ribuan destinasi wisata terbaik di\nBandung dengan mudah dan aman bersama\nGoTour',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,

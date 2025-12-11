@@ -3,9 +3,7 @@ import 'rekomendasi_gaya_foto.dart';
 import 'paket_wisata.dart';
 import 'profile.dart';
 import 'favorite.dart';
-// import 'promo_list.dart';
 import 'blog_wisata.dart';
-import 'destinasi_wisata.dart';
 
 // Halaman Home/Beranda
 class HomeScreen extends StatefulWidget {
@@ -92,7 +90,7 @@ class BerandaPage extends StatelessWidget {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: const [
-                            Text('Hi, Aqila 👋',
+                            Text('Hi, Shara 👋',
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 20,
@@ -126,78 +124,211 @@ class BerandaPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    // Menu icons (3 x 2)
-                    SizedBox(
-                      height: 120,
-                      child: GridView.count(
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 3,
-                        childAspectRatio: 1,
-                        padding: EdgeInsets.zero,
-                        mainAxisSpacing: 6,
-                        crossAxisSpacing: 8,
-                        children: [
-                          SmallMenu(icon: Icons.card_travel, title: 'Paket Wisata', onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const PaketWisataScreen())); }),
-                          SmallMenu(icon: Icons.place, title: 'Destinasi Wisata', onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const DestinasiWisataScreen())); }),
-                          SmallMenu(icon: Icons.calendar_today, title: 'Itinerary', onTap: () {}),
-                          SmallMenu(icon: Icons.recommend, title: 'Rekomendasi', onTap: () {}),
-                          SmallMenu(icon: Icons.camera_alt, title: 'Gaya Foto', onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const RekomendasiGayaFotoScreen())); }),
-                          SmallMenu(icon: Icons.article, title: 'Blog Wisata', onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const BlogWisataScreen())); }),
-                        ],
+                    const SizedBox(height: 16),
+                    // Menu icons - All Visible
+                    Column(
+                      children: [
+                        // Row 1
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SmallMenu(
+                                icon: Icons.map,
+                                title: 'Paket Wisata',
+                                color: Colors.blue[100]!,
+                                iconColor: Colors.blue[700]!,
+                                onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const PaketWisataScreen())); },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: SmallMenu(
+                                icon: Icons.location_on,
+                                title: 'Destinasi Wisata',
+                                color: Colors.green[100]!,
+                                iconColor: Colors.green[700]!,
+                                onTap: () {},
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: SmallMenu(
+                                icon: Icons.calendar_today,
+                                title: 'Itinerary',
+                                color: Colors.purple[100]!,
+                                iconColor: Colors.purple[700]!,
+                                onTap: () {},
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Row 2
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SmallMenu(
+                                icon: Icons.explore,
+                                title: 'Rekomendasi',
+                                color: Colors.orange[100]!,
+                                iconColor: Colors.orange[700]!,
+                                onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const RekomendasiGayaFotoScreen())); },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: SmallMenu(
+                                icon: Icons.camera_alt,
+                                title: 'Gaya Foto',
+                                color: Colors.pink[100]!,
+                                iconColor: Colors.pink[700]!,
+                                onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const RekomendasiGayaFotoScreen())); },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: SmallMenu(
+                                icon: Icons.auto_stories,
+                                title: 'Blog Wisata',
+                                color: Colors.indigo[100]!,
+                                iconColor: Colors.indigo[700]!,
+                                onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const BlogWisataScreen())); },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Promo & Diskon
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Promo & Diskon',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {},
+                      child: Text(
+                        'Lihat Semua',
+                        style: TextStyle(
+                          color: Colors.blue[700],
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 14),
-
-              // Promo & Diskon
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Promo & Diskon', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    TextButton(onPressed: () {}, child: const Text('Lihat Semua')),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               SizedBox(
-                height: 130,
+                height: 145,
                 child: PromoCarousel(),
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
 
-              // Destinasi Paling Banyak Dipesan
+              // Paket Wisata Populer
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Destinasi Paling Banyak Dipesan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    TextButton(onPressed: () {}, child: const Text('Lihat Semua')),
+                    const Text(
+                      'Paket Wisata Populer',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const PaketWisataScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Lihat Semua',
+                        style: TextStyle(
+                          color: Colors.blue[700],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               SizedBox(
-                height: 150,
+                height: 240,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: const [
-                    DestinationCard(title: 'Gunung & Alam', color: Colors.lightBlue),
-                    DestinationCard(title: 'Sawah & Alam', color: Colors.green),
-                    DestinationCard(title: 'Pantai Eksotis', color: Colors.orange),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: [
+                    PaketWisataCard(
+                      nama: 'Barusan Hills Satu',
+                      harga: 'Rp 1.500.000',
+                      durasi: '2 Hari 1 Malam',
+                      rating: 4.8,
+                      gambar: 'assets/images/Barusen Hills Ciwidey.jpg',
+                    ),
+                    PaketWisataCard(
+                      nama: 'Ciwidey Valley',
+                      harga: 'Rp 1.000.000',
+                      durasi: '3 Hari 2 Malam',
+                      rating: 4.7,
+                      gambar: 'assets/images/Ciwidey Valley Hot Spring Waterpark Resort.jpg',
+                    ),
+                    PaketWisataCard(
+                      nama: 'Tafsor Barn',
+                      harga: 'Rp 679.000',
+                      durasi: '1 Hari',
+                      rating: 4.6,
+                      gambar: 'assets/images/tafsor barn.jpg',
+                    ),
+                    PaketWisataCard(
+                      nama: 'Orchid Forest Cikole',
+                      harga: 'Rp 850.000',
+                      durasi: '1 Hari',
+                      rating: 4.7,
+                      gambar: 'assets/images/orchid forest cikole.jpg',
+                    ),
+                    PaketWisataCard(
+                      nama: 'Lodge Maribaya',
+                      harga: 'Rp 1.200.000',
+                      durasi: '2 Hari 1 Malam',
+                      rating: 4.8,
+                      gambar: 'assets/images/The Lodge Maribaya.jpg',
+                    ),
+                    PaketWisataCard(
+                      nama: 'Kawah Putih Ciwidey',
+                      harga: 'Rp 500.000',
+                      durasi: '1 Hari',
+                      rating: 4.9,
+                      gambar: 'assets/images/kawah putih ciwidey.webp',
+                    ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -211,24 +342,61 @@ class SmallMenu extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
+  final Color color;
+  final Color iconColor;
 
-  const SmallMenu({super.key, required this.icon, required this.title, required this.onTap});
+  const SmallMenu({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    required this.color,
+    required this.iconColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)]),
-            padding: const EdgeInsets.all(10),
-            child: Icon(icon, color: Colors.blue[700]),
-          ),
-          const SizedBox(height: 8),
-          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
-        ],
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor, size: 26),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -249,66 +417,152 @@ class _PromoCarouselState extends State<PromoCarousel> {
   @override
   Widget build(BuildContext context) {
     final promos = [
-      Colors.blue.shade600,
-      Colors.green.shade500,
-      Colors.purple.shade400,
+      {
+        'title': 'Diskon 50% Paket Wisata Bandung',
+        'subtitle': 'Berlaku hingga 31 Desember 2025',
+        'colors': [Color(0xFF667EEA), Color(0xFF764BA2)],
+        'icon': Icons.local_offer,
+      },
+      {
+        'title': 'Cashback 100K Paket Liburan',
+        'subtitle': 'Minimal transaksi Rp 2.000.000',
+        'colors': [Color(0xFF11998E), Color(0xFF38EF7D)],
+        'icon': Icons.account_balance_wallet,
+      },
+      {
+        'title': 'Gratis Hotel untuk 2 Malam',
+        'subtitle': 'Khusus pembelian paket premium',
+        'colors': [Color(0xFFFF6B6B), Color(0xFFFFE66D)],
+        'icon': Icons.hotel,
+      },
     ];
 
     return Column(
       children: [
         SizedBox(
-          height: 100,
+          height: 110,
           child: PageView.builder(
             controller: _controller,
             itemCount: promos.length,
             onPageChanged: (i) => setState(() => _page = i),
             itemBuilder: (context, index) {
+              final promo = promos[index];
               return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 8),
+                margin: const EdgeInsets.symmetric(horizontal: 6),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [promos[index], promos[index].withOpacity(0.8)]),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(14.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Text('Diskon 50% Paket Wisata Bandung', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                            SizedBox(height: 6),
-                            Text('Berlaku hingga 31 Desember 2025', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(12)),
-                        child: const Icon(Icons.local_offer, color: Colors.white, size: 34),
-                      ),
-                    ],
+                  gradient: LinearGradient(
+                    colors: promo['colors'] as List<Color>,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (promo['colors'] as List<Color>)[0].withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    // Background pattern
+                    Positioned(
+                      right: -20,
+                      bottom: -20,
+                      child: Icon(
+                        promo['icon'] as IconData,
+                        size: 120,
+                        color: Colors.white.withOpacity(0.15),
+                      ),
+                    ),
+                    // Content
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.25),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Text(
+                                    'PROMO SPESIAL',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  promo['title'] as String,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    height: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  promo['subtitle'] as String,
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.25),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                                width: 2,
+                              ),
+                            ),
+                            child: Icon(
+                              promo['icon'] as IconData,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               );
             },
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
             promos.length,
-            (i) => Container(
+            (i) => AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
               margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: _page == i ? 12 : 6,
-              height: 6,
+              width: _page == i ? 24 : 8,
+              height: 8,
               decoration: BoxDecoration(
                 color: _page == i ? Colors.blue[700] : Colors.grey[300],
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
           ),
@@ -320,32 +574,94 @@ class _PromoCarouselState extends State<PromoCarousel> {
 
 class DestinationCard extends StatelessWidget {
   final String title;
+  final String subtitle;
   final Color color;
-  const DestinationCard({super.key, required this.title, required this.color});
+  const DestinationCard({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 220,
-      margin: const EdgeInsets.only(right: 12),
+      width: 240,
+      margin: const EdgeInsets.only(right: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.15), blurRadius: 6)],
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Container(width: 100, height: 150, decoration: BoxDecoration(color: color, borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12)))),
+          Container(
+            width: 110,
+            height: 160,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color.withOpacity(0.7), color],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+              ),
+            ),
+            child: Center(
+              child: Icon(
+                Icons.landscape,
+                size: 50,
+                color: Colors.white.withOpacity(0.8),
+              ),
+            ),
+          ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  const Text('Dipesan ribuan pengguna', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Lihat Detail',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -523,3 +839,124 @@ class TipsFotoCard extends StatelessWidget {
   }
 }
 
+// Widget Card untuk Paket Wisata Populer
+class PaketWisataCard extends StatelessWidget {
+  final String nama;
+  final String harga;
+  final String durasi;
+  final double rating;
+  final String gambar;
+
+  const PaketWisataCard({
+    super.key,
+    required this.nama,
+    required this.harga,
+    required this.durasi,
+    required this.rating,
+    required this.gambar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 200,
+      margin: const EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image Section
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+            child: Image.asset(
+              gambar,
+              width: 200,
+              height: 120,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: 200,
+                  height: 120,
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                );
+              },
+            ),
+          ),
+          // Info Section
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  nama,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Text(
+                      durasi,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      harga,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[700],
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        const Icon(Icons.star, size: 14, color: Colors.amber),
+                        const SizedBox(width: 2),
+                        Text(
+                          rating.toString(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

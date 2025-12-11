@@ -51,7 +51,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   const Text(
-                    'john.doe@email.com',
+                    'shara.anjelia@email.com',
                     style: TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                 ],
