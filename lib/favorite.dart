@@ -17,6 +17,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       'harga': 'Rp 1.500.000',
       'durasi': '2 Hari 1 Malam',
       'rating': 4.8,
+      'gambar': 'assets/images/Barusen Hills Ciwidey.jpg',
     },
     {
       'nama': 'Ciwidey Valley',
@@ -24,6 +25,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       'harga': 'Rp 1.000.000',
       'durasi': '3 Hari 2 Malam',
       'rating': 4.7,
+      'gambar': 'assets/images/Ciwidey Valley Hot Spring Waterpark Resort.jpg',
     },
     {
       'nama': 'The Lodge Maribaya',
@@ -31,6 +33,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       'harga': 'Rp 350.000',
       'durasi': '2 Hari 1 Malam',
       'rating': 4.8,
+      'gambar': 'assets/images/The Lodge Maribaya.jpg',
     },
     {
       'nama': 'Kawah Putih Ciwidey',
@@ -38,6 +41,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       'harga': 'Rp 350.000',
       'durasi': '2 Hari 1 Malam',
       'rating': 4.9,
+      'gambar': 'assets/images/kawah putih ciwidey.webp',
     },
   ];
 
@@ -82,18 +86,29 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                     padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
-                        // Gambar placeholder
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.blue[200],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.image,
-                            size: 40,
-                            color: Colors.white,
+                        // Gambar dari assets
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            item['gambar'],
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: Colors.blue[200],
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.image,
+                                  size: 40,
+                                  color: Colors.white,
+                                ),
+                              );
+                            },
                           ),
                         ),
                         const SizedBox(width: 12),

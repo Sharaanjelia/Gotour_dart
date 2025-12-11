@@ -4,6 +4,8 @@ import 'paket_wisata.dart';
 import 'profile.dart';
 import 'favorite.dart';
 import 'blog_wisata.dart';
+import 'itinerary.dart';
+import 'e_tiket.dart';
 
 // Halaman Home/Beranda
 class HomeScreen extends StatefulWidget {
@@ -125,7 +127,7 @@ class BerandaPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // Menu icons - All Visible
+                    // Menu icons - 4 items (2x2)
                     Column(
                       children: [
                         // Row 1
@@ -138,16 +140,6 @@ class BerandaPage extends StatelessWidget {
                                 color: Colors.blue[100]!,
                                 iconColor: Colors.blue[700]!,
                                 onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const PaketWisataScreen())); },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: SmallMenu(
-                                icon: Icons.location_on,
-                                title: 'Destinasi Wisata',
-                                color: Colors.green[100]!,
-                                iconColor: Colors.green[700]!,
-                                onTap: () {},
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -166,16 +158,6 @@ class BerandaPage extends StatelessWidget {
                         // Row 2
                         Row(
                           children: [
-                            Expanded(
-                              child: SmallMenu(
-                                icon: Icons.explore,
-                                title: 'Rekomendasi',
-                                color: Colors.orange[100]!,
-                                iconColor: Colors.orange[700]!,
-                                onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const RekomendasiGayaFotoScreen())); },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
                             Expanded(
                               child: SmallMenu(
                                 icon: Icons.camera_alt,
@@ -677,11 +659,311 @@ class BookingPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Data dummy booking (nanti bisa diganti dengan data real dari database/state management)
+    final List<Map<String, dynamic>> bookingList = [
+      {
+        'kodeBooking': 'GT2025001',
+        'namaTempat': 'Barusan Hills Satu',
+        'tanggal': '15 Des 2025',
+        'jumlahOrang': 2,
+        'totalHarga': 3000000,
+        'status': 'Confirmed',
+        'gambar': 'assets/images/Barusen Hills Ciwidey.jpg',
+      },
+      {
+        'kodeBooking': 'GT2025002',
+        'namaTempat': 'Ciwidey Valley',
+        'tanggal': '20 Des 2025',
+        'jumlahOrang': 4,
+        'totalHarga': 4000000,
+        'status': 'Pending',
+        'gambar': 'assets/images/Ciwidey Valley Hot Spring Waterpark Resort.jpg',
+      },
+    ];
+
+    String formatRupiah(int angka) {
+      String str = angka.toString();
+      String result = '';
+      int counter = 0;
+
+      for (int i = str.length - 1; i >= 0; i--) {
+        if (counter == 3) {
+          result = '.$result';
+          counter = 0;
+        }
+        result = str[i] + result;
+        counter++;
+      }
+
+      return 'Rp $result';
+    }
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Booking'), backgroundColor: Colors.blue[700]),
-      body: const Center(
-        child: Text('Halaman Booking (kosong). Ketuk paket untuk memulai booking.'),
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title: const Text('Booking Saya'),
+        backgroundColor: Colors.blue[700],
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
+      body: bookingList.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.inbox_outlined,
+                    size: 100,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Belum Ada Booking',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ketuk paket wisata untuk memulai booking',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: bookingList.length,
+              itemBuilder: (context, index) {
+                final booking = bookingList[index];
+                final isConfirmed = booking['status'] == 'Confirmed';
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header with image
+                      Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(16),
+                              topRight: Radius.circular(16),
+                            ),
+                            child: Image.asset(
+                              booking['gambar'],
+                              width: double.infinity,
+                              height: 150,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: double.infinity,
+                                  height: 150,
+                                  color: Colors.grey[300],
+                                  child: const Icon(
+                                    Icons.image,
+                                    size: 50,
+                                    color: Colors.grey,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          // Status badge
+                          Positioned(
+                            top: 12,
+                            right: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isConfirmed ? Colors.green : Colors.orange,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                booking['status'],
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Content
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Kode Booking
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.confirmation_number,
+                                  size: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Kode: ${booking['kodeBooking']}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            // Nama Tempat
+                            Text(
+                              booking['namaTempat'],
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            // Info Detail
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today,
+                                        size: 16,
+                                        color: Colors.grey[600],
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        booking['tanggal'],
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[700],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.people,
+                                      size: 16,
+                                      color: Colors.grey[600],
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${booking['jumlahOrang']} Orang',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Divider(),
+                            const SizedBox(height: 12),
+                            // Total Harga
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Total Pembayaran',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                Text(
+                                  formatRupiah(booking['totalHarga']),
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            // Action Buttons
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const ItineraryScreen(),
+                                        ),
+                                      );
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.blue[700],
+                                      side: BorderSide(color: Colors.blue[700]!),
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: const Text('Detail'),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ETiketScreen(
+                                            namaTempat: booking['namaTempat'],
+                                            totalHarga: booking['totalHarga'],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue[700],
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: const Text('E-Tiket'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
     );
   }
 }

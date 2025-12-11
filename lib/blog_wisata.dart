@@ -6,35 +6,39 @@ class BlogWisataScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Data dummy artikel blog
+    // Data artikel blog
     final List<Map<String, String>> blogList = [
       {
-        'judul': '10 Tempat Wisata Terbaik di Indonesia',
+        'judul': '32 Destinasi Wisata Terbaik di Bandung',
         'penulis': 'Admin GoTour',
+        'tanggal': '10 Des 2025',
+        'ringkasan': 'Temukan destinasi wisata terbaik yang wajib Anda kunjungi saat berada di Bandung.',
+        'gambar': 'assets/images/Barusen Hills Ciwidey.jpg',
+        'link': 'https://www.klook.com/id/blog/tempat-wisata-di-bandung/?msockid=2e22a4680a5d69d02b50b0f40b016851',
+      },
+      {
+        'judul': '5 Tips Berwisata Hemat',
+        'penulis': 'Travel Expert',
+        'tanggal': '8 Des 2025',
+        'ringkasan': 'Ikuti tips ini untuk berwisata dengan budget yang lebih hemat dan tetap menyenangkan.',
+        'gambar': 'assets/images/Ciwidey Valley Hot Spring Waterpark Resort.jpg',
+        'link': 'https://www.idntimes.com/travel/tips/zaffy-febryan/tips-wisata-hemat-c1c2',
+      },
+      {
+        'judul': 'Pose Foto yang Menarik',
+        'penulis': 'Photography Pro',
         'tanggal': '5 Des 2025',
-        'ringkasan':
-            'Temukan 10 destinasi wisata paling menakjubkan di Indonesia yang wajib dikunjungi.',
+        'ringkasan': 'Bagi Anda yang senang mengunggah berbagai pose foto, tentu akan sebisa mungkin membuat pose foto yang menarik dan bagus',
+        'gambar': 'assets/images/gya fto 2.avif',
+        'link': 'https://tekno.kompas.com/read/2022/05/26/11150067/10-ide-pose-foto-untuk-instagram-agar-lebih-menarik#google_vignette',
       },
       {
-        'judul': 'Tips Traveling Hemat untuk Backpacker',
-        'penulis': 'Traveler Pro',
-        'tanggal': '3 Des 2025',
-        'ringkasan':
-            'Panduan lengkap traveling hemat dengan budget minimal untuk para backpacker.',
-      },
-      {
-        'judul': 'Kuliner Khas yang Wajib Dicoba di Bali',
+        'judul': 'Review Makanan',
         'penulis': 'Food Hunter',
-        'tanggal': '1 Des 2025',
-        'ringkasan':
-            'Jelajahi kelezatan kuliner khas Bali yang akan memanjakan lidah Anda.',
-      },
-      {
-        'judul': 'Panduan Lengkap Mendaki Gunung Rinjani',
-        'penulis': 'Mountain Guide',
-        'tanggal': '28 Nov 2025',
-        'ringkasan':
-            'Persiapan dan tips mendaki Gunung Rinjani untuk pendaki pemula.',
+        'tanggal': '3 Des 2025',
+        'ringkasan': 'Jangan lewatkan untuk mempir ke sederet tempat makanan enak di Bandung dari yang legendaris hingga yang kekinian.',
+        'gambar': 'assets/images/tafsor barn.jpg',
+        'link': 'https://www.kompas.com/food/read/2023/09/02/131700875/35-tempat-makan-enak-di-bandung-dari-legendaris-hingga-kekinian',
       },
     ];
 
@@ -55,32 +59,50 @@ class BlogWisataScreen extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            child: InkWell(
+              child: InkWell(
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Membuka: ${blog['judul']}')),
+                  SnackBar(
+                    content: Text('Membuka: ${blog['judul']}'),
+                    action: SnackBarAction(
+                      label: 'OK',
+                      onPressed: () {},
+                    ),
+                  ),
                 );
               },
               borderRadius: BorderRadius.circular(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Gambar artikel (placeholder)
-                  Container(
-                    height: 150,
-                    decoration: BoxDecoration(
-                      color: Colors.purple[200],
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        topRight: Radius.circular(12),
-                      ),
+                  // Gambar artikel
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
                     ),
-                    child: const Center(
-                      child: Icon(Icons.article, size: 60, color: Colors.white),
+                    child: Image.asset(
+                      blog['gambar']!,
+                      width: double.infinity,
+                      height: 180,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 180,
+                          decoration: BoxDecoration(
+                            color: Colors.blue[200],
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(12),
+                              topRight: Radius.circular(12),
+                            ),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.article, size: 60, color: Colors.white),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-
-                  // Konten artikel
+                  ),                  // Konten artikel
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -145,15 +167,28 @@ class BlogWisataScreen extends StatelessWidget {
                         // Tombol Baca Selengkapnya
                         Align(
                           alignment: Alignment.centerRight,
-                          child: TextButton(
+                          child: ElevatedButton.icon(
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Membuka: ${blog['judul']}'),
+                                  content: Text('Link: ${blog['link']}'),
+                                  duration: const Duration(seconds: 3),
                                 ),
                               );
                             },
-                            child: const Text('Baca Selengkapnya >'),
+                            icon: const Icon(Icons.arrow_forward, size: 16),
+                            label: const Text('Baca Selengkapnya'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue[700],
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
                           ),
                         ),
                       ],
