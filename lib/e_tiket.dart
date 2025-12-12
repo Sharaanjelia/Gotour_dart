@@ -198,7 +198,7 @@ class ETiketScreen extends StatelessWidget {
                                     _buildInfoSection(
                                       icon: Icons.person,
                                       label: 'Nama Pemesan',
-                                      value: 'John Doe',
+                                      value: 'shara Anjelia',
                                     ),
                                     const SizedBox(height: 16),
                                     _buildInfoSection(

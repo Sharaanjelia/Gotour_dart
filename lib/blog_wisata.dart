@@ -71,6 +71,36 @@ class BlogWisataScreen extends StatelessWidget {
                   ),
                 );
               },
+              onLongPress: () {
+                // Tampilkan dialog opsi share
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Bagikan Artikel'),
+                      content: Text('Bagikan "${blog['judul']}" ke teman Anda?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Batal'),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Artikel berhasil dibagikan!'),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.share),
+                          label: const Text('Bagikan'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
               borderRadius: BorderRadius.circular(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

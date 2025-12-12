@@ -235,7 +235,61 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
         child: SizedBox(
           height: 50,
           child: ElevatedButton(
-            onPressed: prosesPembayaran,
+            onPressed: () {
+              if (metodePembayaran.isEmpty) {
+                // Tampilkan bottomsheet untuk pilih metode
+                showModalBottomSheet(
+                  context: context,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  builder: (BuildContext context) {
+                    return Container(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Pilih Metode Pembayaran',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Silakan pilih metode pembayaran terlebih dahulu dari daftar di atas',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue[700],
+                              minimumSize: const Size(double.infinity, 45),
+                            ),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              } else {
+                prosesPembayaran();
+              }
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue[700],
               foregroundColor: Colors.white,

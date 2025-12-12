@@ -8,6 +8,7 @@ import 'blog_wisata.dart';
 import 'itinerary.dart';
 import 'rekomendasi_gaya_foto.dart';
 import 'riwayat_booking.dart';
+import 'settings.dart';
 
 // Halaman Profile
 class ProfileScreen extends StatefulWidget {
@@ -289,8 +290,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.settings,
                     title: 'Pengaturan',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Halaman Pengaturan akan segera hadir')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SettingsScreen()),
                       );
                     },
                   ),
@@ -308,12 +310,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Logout dan kembali ke Login
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
-                      ),
+                    // Tampilkan dialog konfirmasi logout
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Konfirmasi Logout'),
+                          content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Batal'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginScreen(),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+                              child: const Text('Logout'),
+                            ),
+                          ],
+                        );
+                      },
                     );
                   },
                   style: ElevatedButton.styleFrom(

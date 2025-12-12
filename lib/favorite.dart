@@ -194,13 +194,40 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                         IconButton(
                           icon: const Icon(Icons.favorite, color: Colors.red),
                           onPressed: () {
-                            setState(() {
-                              favoriteList.removeAt(index);
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Dihapus dari favorit'),
-                              ),
+                            // Tampilkan dialog konfirmasi hapus
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Hapus Favorit'),
+                                  content: Text('Hapus "${item['nama']}" dari favorit?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: const Text('Batal'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          favoriteList.removeAt(index);
+                                        });
+                                        Navigator.pop(context);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Dihapus dari favorit'),
+                                          ),
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                      ),
+                                      child: const Text('Hapus'),
+                                    ),
+                                  ],
+                                );
+                              },
                             );
                           },
                         ),

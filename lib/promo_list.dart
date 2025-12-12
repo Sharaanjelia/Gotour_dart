@@ -9,7 +9,7 @@ class PromoListScreen extends StatelessWidget {
     // Data dummy promo
     final List<Map<String, String>> promoList = [
       {
-        'judul': 'Diskon 50% Paket Bali',
+        'judul': 'Diskon 50% Paket braga',
         'deskripsi': 'Dapatkan diskon hingga 50% untuk paket wisata Bali!',
         'kode': 'BALI50',
         'berlaku': '31 Des 2025',
