@@ -22,15 +22,24 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
   // Metode pembayaran yang dipilih
   String metodePembayaran = '';
 
-  // Daftar metode pembayaran
-  final List<Map<String, dynamic>> metodeList = [
-    {'nama': 'Transfer Bank BCA', 'icon': Icons.account_balance},
-    {'nama': 'Transfer Bank BNI', 'icon': Icons.account_balance},
-    {'nama': 'Transfer Bank Mandiri', 'icon': Icons.account_balance},
-    {'nama': 'E-Wallet (OVO)', 'icon': Icons.account_balance_wallet},
-    {'nama': 'E-Wallet (GoPay)', 'icon': Icons.account_balance_wallet},
-    {'nama': 'E-Wallet (Dana)', 'icon': Icons.account_balance_wallet},
-  ];
+  // Kategori metode pembayaran
+  final Map<String, List<Map<String, dynamic>>> kategoriMetode = {
+    'Transfer': [
+      {'nama': 'BCA', 'icon': Icons.account_balance},
+      {'nama': 'BNI', 'icon': Icons.account_balance},
+      {'nama': 'Mandiri', 'icon': Icons.account_balance},
+    ],
+    'E-Wallet': [
+      {'nama': 'OVO', 'icon': Icons.smartphone},
+      {'nama': 'GoPay', 'icon': Icons.smartphone},
+      {'nama': 'Dana', 'icon': Icons.smartphone},
+    ],
+    'Kartu Kredit': [
+      {'nama': 'Visa', 'icon': Icons.credit_card},
+      {'nama': 'Mastercard', 'icon': Icons.credit_card},
+      {'nama': 'JCB', 'icon': Icons.credit_card},
+    ],
+  };
 
   // Fungsi untuk format rupiah
   String formatRupiah(int angka) {
@@ -172,30 +181,39 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
 
           // List Metode Pembayaran
           Expanded(
-            child: ListView.builder(
+            child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: metodeList.length,
-              itemBuilder: (context, index) {
-                final metode = metodeList[index];
+              children: kategoriMetode.entries.map((entry) {
+                final kategori = entry.key;
+                final subMetode = entry.value;
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: RadioListTile<String>(
-                    value: metode['nama'],
-                    groupValue: metodePembayaran,
-                    onChanged: (value) {
-                      setState(() {
-                        metodePembayaran = value!;
-                      });
-                    },
-                    title: Text(metode['nama']),
-                    secondary: Icon(metode['icon'], color: Colors.blue[700]),
-                    activeColor: Colors.blue[700],
+                  child: ExpansionTile(
+                    title: Text(
+                      kategori,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    children: subMetode.map((sub) {
+                      final value = '$kategori - ${sub['nama']}';
+                      return RadioListTile<String>(
+                        value: value,
+                        groupValue: metodePembayaran,
+                        onChanged: (val) {
+                          setState(() {
+                            metodePembayaran = val!;
+                          });
+                        },
+                        title: Text(sub['nama']),
+                        secondary: Icon(sub['icon'], color: Colors.blue[700]),
+                        activeColor: Colors.blue[700],
+                      );
+                    }).toList(),
                   ),
                 );
-              },
+              }).toList(),
             ),
           ),
         ],

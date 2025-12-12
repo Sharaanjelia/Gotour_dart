@@ -6,6 +6,7 @@ import 'favorite.dart';
 import 'blog_wisata.dart';
 import 'itinerary.dart';
 import 'e_tiket.dart';
+import 'notifikasi.dart';
 
 // Halaman Home/Beranda
 class HomeScreen extends StatefulWidget {
@@ -103,7 +104,14 @@ class BerandaPage extends StatelessWidget {
                           ],
                         ),
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const NotifikasiScreen(),
+                              ),
+                            );
+                          },
                           icon: const Icon(Icons.notifications, color: Colors.white),
                         ),
                       ],

@@ -1,10 +1,28 @@
 import 'package:flutter/material.dart';
 import 'login.dart';
 import 'layanan_bantuan.dart';
+import 'favorite.dart';
+import 'e_tiket.dart';
+import 'promo_list.dart';
+import 'blog_wisata.dart';
+import 'itinerary.dart';
+import 'rekomendasi_gaya_foto.dart';
+import 'riwayat_booking.dart';
 
 // Halaman Profile
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  // Data pengguna (bisa diganti dengan state management nanti)
+  String nama = 'Shara Anjelia';
+  String email = 'sharaanjelia7@gotour.com';
+  String noHp = '+62 812-3456-7890';
+  String alamat = 'Jakarta, Indonesia';
 
   @override
   Widget build(BuildContext context) {
@@ -14,45 +32,129 @@ class ProfileScreen extends StatelessWidget {
         title: const Text('Profil Saya'),
         backgroundColor: Colors.blue[700],
         foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              // Navigasi ke halaman edit profil
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditProfileScreen(
+                    nama: nama,
+                    email: email,
+                    noHp: noHp,
+                    alamat: alamat,
+                    onSave: (newNama, newEmail, newNoHp, newAlamat) {
+                      setState(() {
+                        nama = newNama;
+                        email = newEmail;
+                        noHp = newNoHp;
+                        alamat = newAlamat;
+                      });
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header Profile
+            // Header Profile dengan background gradient
             Container(
-              padding: const EdgeInsets.all(20),
+              height: 200,
               decoration: BoxDecoration(
-                color: Colors.blue[700],
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
+                gradient: LinearGradient(
+                  colors: [Colors.blue[700]!, Colors.blue[400]!],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
               ),
-              child: Column(
-                children: [
-                  // Avatar
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 50,
-                      color: Colors.blue[700],
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Avatar dengan border
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
+                      ),
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          Icons.person,
+                          size: 50,
+                          color: Colors.blue[700],
+                        ),
+                      ),
                     ),
+                    const SizedBox(height: 10),
+                    Text(
+                      nama,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      email,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Informasi Pengguna
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.2),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Informasi Pribadi',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const Divider(height: 20),
+                  ProfileInfoItem(
+                    icon: Icons.phone,
+                    title: 'Nomor HP',
+                    value: noHp,
                   ),
                   const SizedBox(height: 15),
-                  const Text(
-                    'John Doe',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  const Text(
-                    'shara.anjelia@email.com',
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                  ProfileInfoItem(
+                    icon: Icons.location_on,
+                    title: 'Alamat',
+                    value: alamat,
                   ),
                 ],
               ),
@@ -77,31 +179,95 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 children: [
                   ProfileMenuItem(
-                    icon: Icons.person_outline,
-                    title: 'Edit Profil',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Edit Profil')),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ProfileMenuItem(
                     icon: Icons.history,
                     title: 'Riwayat Booking',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Riwayat Booking')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RiwayatBookingScreen(),
+                        ),
                       );
                     },
                   ),
                   const Divider(height: 1),
                   ProfileMenuItem(
-                    icon: Icons.payment,
-                    title: 'Metode Pembayaran',
+                    icon: Icons.favorite_border,
+                    title: 'Favorit',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Metode Pembayaran')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const FavoriteScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ProfileMenuItem(
+                    icon: Icons.confirmation_number,
+                    title: 'E-Tiket',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ETiketScreen(
+                            namaTempat: 'E-Tiket',
+                            totalHarga: 0,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ProfileMenuItem(
+                    icon: Icons.local_offer,
+                    title: 'Promo',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PromoListScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ProfileMenuItem(
+                    icon: Icons.article,
+                    title: 'Blog Wisata',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BlogWisataScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ProfileMenuItem(
+                    icon: Icons.map,
+                    title: 'Itinerary',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ItineraryScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ProfileMenuItem(
+                    icon: Icons.camera_alt,
+                    title: 'Rekomendasi Gaya Foto',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RekomendasiGayaFotoScreen(),
+                        ),
                       );
                     },
                   ),
@@ -124,7 +290,7 @@ class ProfileScreen extends StatelessWidget {
                     title: 'Pengaturan',
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Pengaturan')),
+                        const SnackBar(content: Text('Halaman Pengaturan akan segera hadir')),
                       );
                     },
                   ),
@@ -170,6 +336,52 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
+// Widget untuk Info Item
+class ProfileInfoItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+
+  const ProfileInfoItem({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.blue[700], size: 24),
+        const SizedBox(width: 15),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // Widget untuk Menu Item di Profile
 class ProfileMenuItem extends StatelessWidget {
   final IconData icon;
@@ -190,6 +402,184 @@ class ProfileMenuItem extends StatelessWidget {
       title: Text(title),
       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
       onTap: onTap,
+    );
+  }
+}
+
+// Halaman Edit Profil
+class EditProfileScreen extends StatefulWidget {
+  final String nama;
+  final String email;
+  final String noHp;
+  final String alamat;
+  final Function(String, String, String, String) onSave;
+
+  const EditProfileScreen({
+    super.key,
+    required this.nama,
+    required this.email,
+    required this.noHp,
+    required this.alamat,
+    required this.onSave,
+  });
+
+  @override
+  State<EditProfileScreen> createState() => _EditProfileScreenState();
+}
+
+class _EditProfileScreenState extends State<EditProfileScreen> {
+  late TextEditingController namaController;
+  late TextEditingController emailController;
+  late TextEditingController noHpController;
+  late TextEditingController alamatController;
+
+  @override
+  void initState() {
+    super.initState();
+    namaController = TextEditingController(text: widget.nama);
+    emailController = TextEditingController(text: widget.email);
+    noHpController = TextEditingController(text: widget.noHp);
+    alamatController = TextEditingController(text: widget.alamat);
+  }
+
+  @override
+  void dispose() {
+    namaController.dispose();
+    emailController.dispose();
+    noHpController.dispose();
+    alamatController.dispose();
+    super.dispose();
+  }
+
+  void _saveProfile() {
+    widget.onSave(
+      namaController.text,
+      emailController.text,
+      noHpController.text,
+      alamatController.text,
+    );
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Profil berhasil diperbarui')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title: const Text('Edit Profil'),
+        backgroundColor: Colors.blue[700],
+        foregroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // Avatar
+            Center(
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundColor: Colors.blue[100],
+                    child: Icon(
+                      Icons.person,
+                      size: 60,
+                      color: Colors.blue[700],
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.blue[700],
+                      child: IconButton(
+                        icon: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                        onPressed: () {
+                          // Fungsi ganti foto (placeholder)
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Fitur ganti foto akan segera hadir')),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
+
+            // Form Fields
+            TextField(
+              controller: namaController,
+              decoration: InputDecoration(
+                labelText: 'Nama Lengkap',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                prefixIcon: const Icon(Icons.person),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: emailController,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                prefixIcon: const Icon(Icons.email),
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: noHpController,
+              decoration: InputDecoration(
+                labelText: 'Nomor HP',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                prefixIcon: const Icon(Icons.phone),
+              ),
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: alamatController,
+              decoration: InputDecoration(
+                labelText: 'Alamat',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                prefixIcon: const Icon(Icons.location_on),
+              ),
+              maxLines: 3,
+            ),
+            const SizedBox(height: 30),
+
+            // Tombol Simpan
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _saveProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue[700],
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Simpan Perubahan', style: TextStyle(fontSize: 16)),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
