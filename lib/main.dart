@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'splash.dart';
+import 'api_example.dart';
 
 void main() {
   runApp(const MyApp());
@@ -22,6 +23,9 @@ class MyApp extends StatelessWidget {
       ),
       // Halaman pertama yang ditampilkan adalah Splash Screen
       home: const SplashScreen(),
+      routes: {
+        '/api-example': (context) => ApiExampleScreen(),
+      },
     );
   }
 }

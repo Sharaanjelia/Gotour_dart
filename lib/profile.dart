@@ -11,19 +11,18 @@ import 'riwayat_booking.dart';
 import 'settings.dart';
 
 // Halaman Profile
+
+import 'api_laravel_profile.dart';
+
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final String token;
+  const ProfileScreen({super.key, required this.token});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  // Data pengguna (bisa diganti dengan state management nanti)
-  String nama = 'Shara Anjelia';
-  String email = 'sharaanjelia7@gotour.com';
-  String noHp = '+62 812-3456-7890';
-  String alamat = 'Jakarta, Indonesia';
+
 
   @override
   Widget build(BuildContext context) {
@@ -36,329 +35,327 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.api),
+            tooltip: 'Assessment 3',
             onPressed: () {
-              // Navigasi ke halaman edit profil
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditProfileScreen(
-                    nama: nama,
-                    email: email,
-                    noHp: noHp,
-                    alamat: alamat,
-                    onSave: (newNama, newEmail, newNoHp, newAlamat) {
-                      setState(() {
-                        nama = newNama;
-                        email = newEmail;
-                        noHp = newNoHp;
-                        alamat = newAlamat;
-                      });
-                    },
-                  ),
-                ),
-              );
+              Navigator.pushNamed(context, '/api-example');
             },
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Header Profile dengan background gradient
-            Container(
-              height: 200,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.blue[700]!, Colors.blue[400]!],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Avatar dengan border
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 4),
-                      ),
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.person,
-                          size: 50,
-                          color: Colors.blue[700],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      nama,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      email,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Informasi Pengguna
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Informasi Pribadi',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+      body: FutureBuilder<Map<String, dynamic>?>(
+        future: fetchProfile(token: widget.token),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (!snapshot.hasData || snapshot.data == null) {
+            return const Center(child: Text('Gagal memuat data profil.'));
+          }
+          final user = snapshot.data!;
+          final nama = user['name'] ?? '-';
+          final email = user['email'] ?? '-';
+          final noHp = user['no_hp'] ?? '-';
+          final alamat = user['alamat'] ?? '-';
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                // Header Profile dengan background gradient
+                Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.blue[700]!, Colors.blue[400]!],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                     ),
                   ),
-                  const Divider(height: 20),
-                  ProfileInfoItem(
-                    icon: Icons.phone,
-                    title: 'Nomor HP',
-                    value: noHp,
-                  ),
-                  const SizedBox(height: 15),
-                  ProfileInfoItem(
-                    icon: Icons.location_on,
-                    title: 'Alamat',
-                    value: alamat,
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Menu Items
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  ProfileMenuItem(
-                    icon: Icons.history,
-                    title: 'Riwayat Booking',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RiwayatBookingScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ProfileMenuItem(
-                    icon: Icons.favorite_border,
-                    title: 'Favorit',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FavoriteScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ProfileMenuItem(
-                    icon: Icons.confirmation_number,
-                    title: 'E-Tiket',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ETiketScreen(
-                            namaTempat: 'E-Tiket',
-                            totalHarga: 0,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Avatar dengan border
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 4),
+                          ),
+                          child: CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.white,
+                            child: Icon(
+                              Icons.person,
+                              size: 50,
+                              color: Colors.blue[700],
+                            ),
                           ),
                         ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ProfileMenuItem(
-                    icon: Icons.local_offer,
-                    title: 'Promo',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PromoListScreen(),
+                        const SizedBox(height: 10),
+                        Text(
+                          nama,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ProfileMenuItem(
-                    icon: Icons.article,
-                    title: 'Blog Wisata',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const BlogWisataScreen(),
+                        const SizedBox(height: 5),
+                        Text(
+                          email,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                          ),
                         ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ProfileMenuItem(
-                    icon: Icons.map,
-                    title: 'Itinerary',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ItineraryScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ProfileMenuItem(
-                    icon: Icons.camera_alt,
-                    title: 'Rekomendasi Gaya Foto',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RekomendasiGayaFotoScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ProfileMenuItem(
-                    icon: Icons.help_outline,
-                    title: 'Bantuan',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LayananBantuanScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ProfileMenuItem(
-                    icon: Icons.settings,
-                    title: 'Pengaturan',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Tombol Logout
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Tampilkan dialog konfirmasi logout
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text('Konfirmasi Logout'),
-                          content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              child: const Text('Batal'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const LoginScreen(),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                              ),
-                              child: const Text('Logout'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      ],
                     ),
                   ),
-                  child: const Text('Logout', style: TextStyle(fontSize: 16)),
                 ),
-              ),
-            ),
 
-            const SizedBox(height: 20),
-          ],
-        ),
+                const SizedBox(height: 20),
+
+                // Informasi Pengguna
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Informasi Pribadi',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const Divider(height: 20),
+                      ProfileInfoItem(
+                        icon: Icons.phone,
+                        title: 'Nomor HP',
+                        value: noHp,
+                      ),
+                      const SizedBox(height: 15),
+                      ProfileInfoItem(
+                        icon: Icons.location_on,
+                        title: 'Alamat',
+                        value: alamat,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Menu Items
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      ProfileMenuItem(
+                        icon: Icons.history,
+                        title: 'Riwayat Booking',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RiwayatBookingScreen(token: widget.token),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ProfileMenuItem(
+                        icon: Icons.favorite_border,
+                        title: 'Favorit',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const FavoriteScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ProfileMenuItem(
+                        icon: Icons.confirmation_number,
+                        title: 'E-Tiket',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ETiketScreen(
+                                namaTempat: 'E-Tiket',
+                                totalHarga: 0,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ProfileMenuItem(
+                        icon: Icons.local_offer,
+                        title: 'Promo',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PromoListScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ProfileMenuItem(
+                        icon: Icons.article,
+                        title: 'Blog Wisata',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BlogWisataScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ProfileMenuItem(
+                        icon: Icons.map,
+                        title: 'Itinerary',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ItineraryScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ProfileMenuItem(
+                        icon: Icons.camera_alt,
+                        title: 'Rekomendasi Gaya Foto',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RekomendasiGayaFotoScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ProfileMenuItem(
+                        icon: Icons.help_outline,
+                        title: 'Bantuan',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LayananBantuanScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ProfileMenuItem(
+                        icon: Icons.settings,
+                        title: 'Pengaturan',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Tombol Logout
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Tampilkan dialog konfirmasi logout
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Konfirmasi Logout'),
+                              content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text('Batal'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const LoginScreen(),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                  ),
+                                  child: const Text('Logout'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Logout', style: TextStyle(fontSize: 16)),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

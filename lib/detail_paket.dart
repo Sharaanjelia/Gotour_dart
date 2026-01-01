@@ -3,21 +3,13 @@ import 'booking.dart';
 
 // Halaman Detail Paket Wisata
 class DetailPaketScreen extends StatelessWidget {
-  final String nama;
-  final String harga;
-  final String durasi;
-  final double rating;
-  final String deskripsi;
-  final String? gambar;
+  final Map paket;
+  final String? token;
 
   const DetailPaketScreen({
     super.key,
-    required this.nama,
-    required this.harga,
-    required this.durasi,
-    required this.rating,
-    required this.deskripsi,
-    this.gambar,
+    required this.paket,
+    this.token,
   });
 
   @override
@@ -50,9 +42,9 @@ class DetailPaketScreen extends StatelessWidget {
                   Container(
                     height: 280,
                     width: double.infinity,
-                    child: gambar != null
-                        ? Image.asset(
-                            gambar!,
+                    child: paket['gambar'] != null
+                        ? Image.network(
+                            paket['gambar'],
                             width: double.infinity,
                             height: 280,
                             fit: BoxFit.cover,
@@ -85,7 +77,7 @@ class DetailPaketScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                nama,
+                                paket['nama'] ?? '-',
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -110,7 +102,7 @@ class DetailPaketScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    rating.toString(),
+                                    paket['rating']?.toString() ?? '-',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
@@ -129,7 +121,7 @@ class DetailPaketScreen extends StatelessWidget {
                             Icon(Icons.access_time, color: Colors.blue[700]),
                             const SizedBox(width: 8),
                             Text(
-                              durasi,
+                              paket['durasi'] ?? '-',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.grey[700],
@@ -143,7 +135,7 @@ class DetailPaketScreen extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              harga,
+                              paket['harga'].toString(),
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
@@ -171,7 +163,7 @@ class DetailPaketScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          deskripsi,
+                          paket['deskripsi'] ?? '-',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[700],
@@ -180,7 +172,7 @@ class DetailPaketScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 24),
 
-                        // Include dalam paket
+                        // Include dalam paket (dummy)
                         const Text(
                           'Termasuk Dalam Paket',
                           style: TextStyle(
@@ -205,7 +197,7 @@ class DetailPaketScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 24),
 
-                        // Itinerary
+                        // Itinerary (dummy)
                         const Text(
                           'Itinerary',
                           style: TextStyle(
@@ -256,8 +248,7 @@ class DetailPaketScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      BookingScreen(namaTempat: nama, harga: harga),
+                  builder: (context) => BookingScreen(paket: paket, token: token),
                 ),
               );
             },

@@ -10,7 +10,8 @@ import 'notifikasi.dart';
 
 // Halaman Home/Beranda
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String namaUser;
+  const HomeScreen({super.key, this.namaUser = "Shara"});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -21,13 +22,19 @@ class _HomeScreenState extends State<HomeScreen> {
   int currentIndex = 0;
 
   // Daftar halaman untuk bottom navigation
-  final List<Widget> pages = [
-    const BerandaPage(),
-    const PaketWisataScreen(),
-    const BookingPlaceholder(),
-    const FavoriteScreen(),
-    const ProfileScreen(),
-  ];
+  late final List<Widget> pages;
+
+  @override
+  void initState() {
+    super.initState();
+    pages = [
+      BerandaPage(namaUser: widget.namaUser),
+      const PaketWisataScreen(),
+      const BookingPlaceholder(),
+      const FavoriteScreen(),
+      ProfileScreen(token: 'dummy_token'), // Ganti dengan token asli jika sudah ada
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // Halaman Beranda (konten utama)
 class BerandaPage extends StatelessWidget {
-  const BerandaPage({super.key});
+  final String namaUser;
+  const BerandaPage({super.key, this.namaUser = "Shara"});
 
   @override
   Widget build(BuildContext context) {
@@ -92,14 +100,14 @@ class BerandaPage extends StatelessWidget {
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text('Hi, Shara 👋',
-                                style: TextStyle(
+                          children: [
+                            Text('Hi, ${namaUser[0].toUpperCase()}${namaUser.substring(1)} 👋',
+                                style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold)),
-                            SizedBox(height: 6),
-                            Text('Mau jalan-jalan kemana hari ini?',
+                            const SizedBox(height: 6),
+                            const Text('Mau jalan-jalan kemana hari ini?',
                                 style: TextStyle(color: Colors.white70)),
                           ],
                         ),

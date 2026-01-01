@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login.dart';
+import 'register.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -112,17 +113,16 @@ class OnboardingScreen extends StatelessWidget {
                   height: 56,
                   child: OutlinedButton(
                     onPressed: () {
-                      // Nanti bisa ke register screen
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
+                          builder: (context) => const RegisterScreen(),
                         ),
                       );
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
                       side: const BorderSide(color: Colors.white, width: 2),
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
