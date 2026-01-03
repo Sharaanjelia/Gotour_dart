@@ -190,7 +190,7 @@ class BerandaPage extends StatelessWidget {
                                 title: 'Blog Wisata',
                                 color: Colors.indigo[100]!,
                                 iconColor: Colors.indigo[700]!,
-                                onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const BlogWisataScreen())); },
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BlogWisataScreen() as Widget)),
                               ),
                             ),
                           ],

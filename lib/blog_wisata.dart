@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'api_laravel_blog.dart';
 
@@ -11,85 +10,94 @@ class BlogWisataScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text('Blog Wisata'),
-        backgroundColor: Colors.blue[700],
+        title: const Text('Blog Wisata'),
+        backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: fetchBlogList(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
+
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('Belum ada artikel blog.'));
+            return const Center(child: Text('Belum ada artikel blog.'));
           }
+
           final blogList = snapshot.data!;
           return ListView.builder(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             itemCount: blogList.length,
             itemBuilder: (context, index) {
               final blog = blogList[index];
+
+              final judul = (blog['judul'] ?? blog['title'] ?? '-').toString();
+              final penulis = (blog['penulis'] ?? blog['author'] ?? '-')
+                  .toString();
+              final tanggal = (blog['tanggal'] ?? blog['date'] ?? '-')
+                  .toString();
+              final ringkasan = (blog['ringkasan'] ?? blog['summary'] ?? '-')
+                  .toString();
+              final gambar = blog['gambar']?.toString();
+
               return Card(
-                margin: EdgeInsets.only(bottom: 16),
+                margin: const EdgeInsets.only(bottom: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Membuka: ${blog['judul'] ?? blog['title']}'),
-                        action: SnackBarAction(
-                          label: 'OK',
-                          onPressed: () {},
-                        ),
+                        content: Text('Membuka: $judul'),
+                        action: SnackBarAction(label: 'OK', onPressed: () {}),
                       ),
                     );
                   },
                   onLongPress: () {
-                    // Tampilkan dialog opsi share
                     showDialog(
                       context: context,
                       builder: (context) {
                         return AlertDialog(
-                          title: Text('Bagikan Artikel'),
-                          content: Text('Bagikan "${blog['judul'] ?? blog['title']}" ke teman Anda?'),
+                          title: const Text('Bagikan Artikel'),
+                          content: Text('Bagikan "$judul" ke teman Anda?'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: Text('Batal'),
+                              child: const Text('Batal'),
                             ),
                             ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Artikel berhasil dibagikan!'),
+                                  const SnackBar(
+                                    content: Text(
+                                      'Artikel berhasil dibagikan!',
+                                    ),
                                   ),
                                 );
                               },
-                              icon: Icon(Icons.share),
-                              label: Text('Bagikan'),
+                              icon: const Icon(Icons.share),
+                              label: const Text('Bagikan'),
                             ),
                           ],
                         );
                       },
                     );
                   },
-                  borderRadius: BorderRadius.circular(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Gambar artikel
                       ClipRRect(
-                        borderRadius: BorderRadius.only(
+                        borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(12),
                           topRight: Radius.circular(12),
                         ),
-                        child: blog['gambar'] != null
+                        child: (gambar != null && gambar.isNotEmpty)
                             ? Image.network(
-                                blog['gambar'],
+                                gambar,
                                 width: double.infinity,
                                 height: 180,
                                 fit: BoxFit.cover,
@@ -97,8 +105,12 @@ class BlogWisataScreen extends StatelessWidget {
                                   return Container(
                                     color: Colors.green[200],
                                     height: 180,
-                                    child: Center(
-                                      child: Icon(Icons.image, size: 60, color: Colors.white),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.image,
+                                        size: 60,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   );
                                 },
@@ -106,39 +118,60 @@ class BlogWisataScreen extends StatelessWidget {
                             : Container(
                                 color: Colors.green[200],
                                 height: 180,
-                                child: Center(
-                                  child: Icon(Icons.image, size: 60, color: Colors.white),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.image,
+                                    size: 60,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                       ),
                       Padding(
-                        padding: EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              blog['judul'] ?? blog['title'] ?? '-',
-                              style: TextStyle(
+                              judul,
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Row(
                               children: [
-                                Icon(Icons.person, size: 16, color: Colors.grey),
-                                SizedBox(width: 4),
-                                Text(blog['penulis'] ?? blog['author'] ?? '-', style: TextStyle(color: Colors.grey)),
-                                SizedBox(width: 16),
-                                Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                                SizedBox(width: 4),
-                                Text(blog['tanggal'] ?? blog['date'] ?? '-', style: TextStyle(color: Colors.grey)),
+                                const Icon(
+                                  Icons.person,
+                                  size: 16,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  penulis,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                                const SizedBox(width: 16),
+                                const Icon(
+                                  Icons.calendar_today,
+                                  size: 16,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  tanggal,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
                               ],
                             ),
-                            SizedBox(height: 12),
+                            const SizedBox(height: 12),
                             Text(
-                              blog['ringkasan'] ?? blog['summary'] ?? '-',
-                              style: TextStyle(fontSize: 15, color: Colors.black87),
+                              ringkasan,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Colors.black87,
+                              ),
                             ),
                           ],
                         ),
@@ -154,4 +187,3 @@ class BlogWisataScreen extends StatelessWidget {
     );
   }
 }
-  

@@ -78,6 +78,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -235,7 +237,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => RiwayatBookingScreen(token: widget.token),
+                              builder: (context) => RiwayatBookingScreen(token: widget.token) as Widget,
                             ),
                           );
                         },
@@ -290,7 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const BlogWisataScreen(),
+                              builder: (context) => const BlogWisataScreen() as Widget,
                             ),
                           );
                         },
