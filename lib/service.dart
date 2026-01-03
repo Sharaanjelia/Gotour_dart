@@ -14,7 +14,7 @@ class ServiceScreen extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: fetchServices(),
+        future: fetchServiceList(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

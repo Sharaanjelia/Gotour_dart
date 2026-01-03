@@ -14,6 +14,61 @@ import 'settings.dart';
 
 import 'api_laravel_profile.dart';
 
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+// Fungsi untuk fetch data admin dari API
+Future<List<dynamic>> fetchAdminUser() async {
+  final response = await http.get(Uri.parse('http://yourdomain.com/api/Admin_User'));
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    // Jika response berupa objek dengan key 'data', ambil array dari 'data'
+    if (data is Map<String, dynamic> && data.containsKey('data')) {
+      return data['data'];
+    }
+    // Jika response langsung berupa array
+    if (data is List) {
+      return data;
+    }
+    // Jika tidak sesuai, kembalikan list kosong
+    return [];
+  } else {
+    throw Exception('Gagal mengambil data admin');
+  }
+}
+
+// Contoh penggunaan di widget (letakkan di dalam body atau di bawah tombol logout):
+//
+// Padding(
+//   padding: const EdgeInsets.all(20),
+//   child: SizedBox(
+//     height: 200,
+//     child: FutureBuilder<List<dynamic>>(
+//       future: fetchAdminUser(),
+//       builder: (context, snapshot) {
+//         if (snapshot.connectionState == ConnectionState.waiting) {
+//           return Center(child: CircularProgressIndicator());
+//         } else if (snapshot.hasError) {
+//           return Text('Error: \\${snapshot.error}');
+//         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+//           return Text('Tidak ada data admin');
+//         } else {
+//           return ListView.builder(
+//             itemCount: snapshot.data!.length,
+//             itemBuilder: (context, index) {
+//               final admin = snapshot.data![index];
+//               return ListTile(
+//                 title: Text(admin['nama'] ?? 'Tanpa Nama'),
+//                 subtitle: Text(admin['email'] ?? ''),
+//               );
+//             },
+//           );
+//         }
+//       },
+//     ),
+//   ),
+// ),
+
 class ProfileScreen extends StatefulWidget {
   final String token;
   const ProfileScreen({super.key, required this.token});
@@ -222,7 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const PromoListScreen(),
+                              builder: (context) => promo.PromoListScreen(),
                             ),
                           );
                         },
@@ -291,6 +346,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         },
                       ),
                     ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Tampilkan daftar admin di bawah menu profil
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: SizedBox(
+                    height: 200,
+                    child: FutureBuilder<List<dynamic>>(
+                      future: fetchAdminUser(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return Text('Error: \\${snapshot.error}');
+                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Text('Tidak ada data admin');
+                        } else {
+                          return ListView.builder(
+                            itemCount: snapshot.data!.length,
+                            itemBuilder: (context, index) {
+                              final admin = snapshot.data![index];
+                              return ListTile(
+                                leading: admin['photo'] != null
+                                    ? CircleAvatar(
+                                        backgroundImage: NetworkImage(admin['photo']),
+                                      )
+                                    : const CircleAvatar(child: Icon(Icons.person)),
+                                title: Text(admin['name'] ?? admin['nama'] ?? 'Tanpa Nama'),
+                                subtitle: Text(admin['email'] ?? ''),
+                              );
+                            },
+                          );
+                        }
+                      },
+                    ),
                   ),
                 ),
 
