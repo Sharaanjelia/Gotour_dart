@@ -1,4 +1,5 @@
 
+import 'package:flutter/material.dart';
 import 'api_laravel_blog.dart';
 
 // Halaman Blog Wisata
@@ -10,7 +11,7 @@ class BlogWisataScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Blog Wisata'),
+        title: Text('Blog Wisata'),
         backgroundColor: Colors.blue[700],
         foregroundColor: Colors.white,
       ),
@@ -18,19 +19,19 @@ class BlogWisataScreen extends StatelessWidget {
         future: fetchBlogList(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('Belum ada artikel blog.'));
+            return Center(child: Text('Belum ada artikel blog.'));
           }
           final blogList = snapshot.data!;
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             itemCount: blogList.length,
             itemBuilder: (context, index) {
               final blog = blogList[index];
               return Card(
-                margin: const EdgeInsets.only(bottom: 16),
+                margin: EdgeInsets.only(bottom: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -50,26 +51,26 @@ class BlogWisataScreen extends StatelessWidget {
                     // Tampilkan dialog opsi share
                     showDialog(
                       context: context,
-                      builder: (BuildContext context) {
+                      builder: (context) {
                         return AlertDialog(
-                          title: const Text('Bagikan Artikel'),
+                          title: Text('Bagikan Artikel'),
                           content: Text('Bagikan "${blog['judul'] ?? blog['title']}" ke teman Anda?'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text('Batal'),
+                              child: Text('Batal'),
                             ),
                             ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
+                                  SnackBar(
                                     content: Text('Artikel berhasil dibagikan!'),
                                   ),
                                 );
                               },
-                              icon: const Icon(Icons.share),
-                              label: const Text('Bagikan'),
+                              icon: Icon(Icons.share),
+                              label: Text('Bagikan'),
                             ),
                           ],
                         );
@@ -82,7 +83,7 @@ class BlogWisataScreen extends StatelessWidget {
                     children: [
                       // Gambar artikel
                       ClipRRect(
-                        borderRadius: const BorderRadius.only(
+                        borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(12),
                           topRight: Radius.circular(12),
                         ),
@@ -96,7 +97,7 @@ class BlogWisataScreen extends StatelessWidget {
                                   return Container(
                                     color: Colors.green[200],
                                     height: 180,
-                                    child: const Center(
+                                    child: Center(
                                       child: Icon(Icons.image, size: 60, color: Colors.white),
                                     ),
                                   );
@@ -105,39 +106,39 @@ class BlogWisataScreen extends StatelessWidget {
                             : Container(
                                 color: Colors.green[200],
                                 height: 180,
-                                child: const Center(
+                                child: Center(
                                   child: Icon(Icons.image, size: 60, color: Colors.white),
                                 ),
                               ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               blog['judul'] ?? blog['title'] ?? '-',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             Row(
                               children: [
-                                const Icon(Icons.person, size: 16, color: Colors.grey),
-                                const SizedBox(width: 4),
-                                Text(blog['penulis'] ?? blog['author'] ?? '-', style: const TextStyle(color: Colors.grey)),
-                                const SizedBox(width: 16),
-                                const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                                const SizedBox(width: 4),
-                                Text(blog['tanggal'] ?? blog['date'] ?? '-', style: const TextStyle(color: Colors.grey)),
+                                Icon(Icons.person, size: 16, color: Colors.grey),
+                                SizedBox(width: 4),
+                                Text(blog['penulis'] ?? blog['author'] ?? '-', style: TextStyle(color: Colors.grey)),
+                                SizedBox(width: 16),
+                                Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                                SizedBox(width: 4),
+                                Text(blog['tanggal'] ?? blog['date'] ?? '-', style: TextStyle(color: Colors.grey)),
                               ],
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             Text(
                               blog['ringkasan'] ?? blog['summary'] ?? '-',
-                              style: const TextStyle(fontSize: 15, color: Colors.black87),
+                              style: TextStyle(fontSize: 15, color: Colors.black87),
                             ),
                           ],
                         ),
@@ -152,3 +153,5 @@ class BlogWisataScreen extends StatelessWidget {
       ),
     );
   }
+}
+  

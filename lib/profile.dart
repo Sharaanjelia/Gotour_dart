@@ -3,7 +3,7 @@ import 'login.dart';
 import 'layanan_bantuan.dart';
 import 'favorite.dart';
 import 'e_tiket.dart';
-import 'promo_list.dart';
+import 'promo_list.dart' as promo;
 import 'blog_wisata.dart';
 import 'itinerary.dart';
 import 'rekomendasi_gaya_foto.dart';
@@ -22,8 +22,7 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-
-
+class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -526,7 +525,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         onPressed: () {
                           // Fungsi ganti foto (placeholder)
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur ganti foto akan segera hadir')),
+                            const SnackBar(content: Text('Fitur ganti foto akan segera hadir')), 
                           );
                         },
                       ),

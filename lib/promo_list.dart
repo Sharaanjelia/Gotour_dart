@@ -99,32 +99,3 @@ class PromoListScreen extends StatelessWidget {
     );
   }
 }
-                            const Text(
-                              'Berlaku sampai',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white70,
-                              ),
-                            ),
-                            Text(
-                              promo['berlaku']!,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
