@@ -3,11 +3,13 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class ApiExampleScreen extends StatefulWidget {
+  const ApiExampleScreen({super.key});
+
   @override
-  _ApiExampleScreenState createState() => _ApiExampleScreenState();
+  ApiExampleScreenState createState() => ApiExampleScreenState();
 }
 
-class _ApiExampleScreenState extends State<ApiExampleScreen> {
+class ApiExampleScreenState extends State<ApiExampleScreen> {
   List<dynamic> apiData = [];
   bool isLoading = false;
 

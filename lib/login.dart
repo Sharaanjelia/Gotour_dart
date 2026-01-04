@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'home.dart';
-import 'register.dart'; // Import RegisterScreen
+import 'register.dart';
+import 'services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -14,6 +17,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
+  final ApiService _apiService = ApiService();
 
   @override
   void dispose() {
@@ -22,13 +27,54 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
-    if (_formKey.currentState!.validate()) {
-      String nama = _emailController.text.split('@')[0]; // Contoh: ambil nama dari email
+  Future<void> _login() async {
+    if (_isLoading) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final result = await _apiService.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
+      final token = (result['token'] ?? result['access_token'] ?? result['bearer_token'])?.toString();
+
+      final userRaw = result['user'] ?? (result['data'] is Map ? (result['data'] as Map)['user'] : null);
+      final user = userRaw is Map ? userRaw : <dynamic, dynamic>{};
+
+      final userId = (user['id'] ?? user['user_id'] ?? result['user_id']);
+      final userName = (user['name'] ?? user['nama'] ?? result['user_name'] ?? result['name']);
+      final userEmail = (user['email'] ?? result['user_email'] ?? result['email']);
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Token tidak ditemukan dari response login');
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', token);
+      if (userId != null) {
+        await prefs.setString('user_id', userId.toString());
+      }
+      if (userName != null) {
+        await prefs.setString('user_name', userName.toString());
+      }
+      if (userEmail != null) {
+        await prefs.setString('user_email', userEmail.toString());
+      }
+
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen(namaUser: nama)),
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -191,7 +237,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       height: 54,
                       child: ElevatedButton(
-                        onPressed: _login,
+                        onPressed: _isLoading ? null : _login,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
@@ -199,14 +245,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           elevation: 5,
                         ),
-                        child: const Text(
-                          'Masuk',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF667EEA),
-                          ),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text(
+                                'Masuk',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF667EEA),
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -223,7 +275,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                              MaterialPageRoute(builder: (_) => const RegisterScreen()),
                             );
                           },
                           child: const Text(

@@ -1,166 +1,262 @@
-
 import 'package:flutter/material.dart';
-import 'api_laravel_riwayat.dart';
+import 'package:intl/intl.dart';
 
-// Halaman Riwayat Booking
-class RiwayatBookingScreen extends StatelessWidget {
-  final String token;
-  const RiwayatBookingScreen({super.key, required this.token});
+import 'e_tiket.dart';
+import 'services/api_service.dart';
+
+class RiwayatBookingScreen extends StatefulWidget {
+  const RiwayatBookingScreen({super.key});
+
+  @override
+  State<RiwayatBookingScreen> createState() => _RiwayatBookingScreenState();
+}
+
+class _RiwayatBookingScreenState extends State<RiwayatBookingScreen> {
+  final ApiService _apiService = ApiService();
+  late Future<List> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _apiService.getPayments();
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _future = _apiService.getPayments();
+    });
+    await _future;
+  }
+
+  Color _statusColor(String status) {
+    final s = status.toLowerCase();
+    if (s.contains('paid') || s.contains('selesai') || s.contains('success')) return Colors.green;
+    if (s.contains('pending') || s.contains('proses') || s.contains('unpaid')) return Colors.orange;
+    if (s.contains('cancel') || s.contains('batal') || s.contains('failed')) return Colors.red;
+    return Colors.grey;
+  }
+
+  bool _isPaid(String status) {
+    final s = status.toLowerCase();
+    return s.contains('paid') || s.contains('selesai') || s.contains('success');
+  }
+
+  Future<void> _confirmPay(int paymentId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Konfirmasi Pembayaran'),
+        content: const Text('Lanjutkan pembayaran untuk transaksi ini?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Bayar')),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+
+    try {
+      await _apiService.payPayment(paymentId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pembayaran berhasil.')));
+      await _refresh();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Future<void> _confirmDelete(int paymentId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Riwayat'),
+        content: const Text('Yakin ingin menghapus riwayat pembayaran ini?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Hapus')),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+    try {
+      await _apiService.deletePayment(paymentId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Riwayat dihapus.')));
+      await _refresh();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-
-
-    String formatRupiah(int angka) {
-      String str = angka.toString();
-      String result = '';
-      int counter = 0;
-      for (int i = str.length - 1; i >= 0; i--) {
-        if (counter == 3) {
-          result = '.$result';
-          counter = 0;
-        }
-        result = str[i] + result;
-        counter++;
-      }
-      return 'Rp $result';
-    }
-
-    Color getStatusColor(String status) {
-      switch (status) {
-        case 'Selesai':
-          return Colors.green[200]!;
-        case 'Dalam Proses':
-          return Colors.orange[200]!;
-        case 'Dibatalkan':
-          return Colors.red[200]!;
-        default:
-          return Colors.grey[300]!;
-      }
-    }
-
-    Color getStatusTextColor(String status) {
-      switch (status) {
-        case 'Selesai':
-          return Colors.green[800]!;
-        case 'Dalam Proses':
-          return Colors.orange[800]!;
-        case 'Dibatalkan':
-          return Colors.red[800]!;
-        default:
-          return Colors.grey[800]!;
-      }
-    }
+    final rupiah = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final dateFormat = DateFormat('dd MMM yyyy');
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Riwayat Booking'),
-        backgroundColor: Colors.blue[700],
+        title: const Text('Riwayat Pembayaran'),
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: fetchRiwayatBooking(token: token),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('Belum ada riwayat booking.'));
-          }
-          final riwayatBooking = snapshot.data!;
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: riwayatBooking.length,
-            itemBuilder: (context, index) {
-              final item = riwayatBooking[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 20),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                elevation: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          child: FutureBuilder<List>(
+            future: _future,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return ListView(
                   children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(18),
-                        topRight: Radius.circular(18),
-                      ),
-                      child: item['gambar'] != null
-                          ? Image.network(
-                              item['gambar'],
-                              height: 160,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            )
-                          : Container(
-                              height: 160,
-                              color: Colors.green[200],
-                              child: const Center(
-                                child: Icon(Icons.card_travel, size: 60, color: Colors.white),
-                              ),
-                            ),
-                    ),
+                    const SizedBox(height: 120),
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const SizedBox(height: 12),
                     Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text('Error: ${snapshot.error}', textAlign: TextAlign.center),
+                    ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: _refresh,
+                        child: const Text('Coba Lagi'),
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              final payments = snapshot.data ?? const [];
+              if (payments.isEmpty) {
+                return ListView(
+                  children: const [
+                    SizedBox(height: 140),
+                    Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey),
+                    SizedBox(height: 12),
+                    Center(child: Text('Belum ada riwayat pembayaran.')),
+                  ],
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(20),
+                itemCount: payments.length,
+                itemBuilder: (context, index) {
+                  final p = payments[index] is Map ? payments[index] as Map : <dynamic, dynamic>{};
+                  final idRaw = p['id'] ?? p['payment_id'] ?? 0;
+                  final paymentId = int.tryParse(idRaw.toString()) ?? 0;
+
+                  final status = (p['status'] ?? p['payment_status'] ?? '-').toString();
+                  final statusColor = _statusColor(status);
+
+                  final packageRaw = p['package'] ?? p['paket'];
+                  final package = packageRaw is Map ? packageRaw : <dynamic, dynamic>{};
+                  final packageName = (p['package_name'] ?? package['name'] ?? package['nama'] ?? p['nama_paket'] ?? '-').toString();
+
+                  final amountRaw = p['amount'] ?? p['total'] ?? p['total_amount'] ?? p['harga'] ?? 0;
+                  final amount = int.tryParse(amountRaw.toString()) ?? 0;
+
+                  DateTime date = DateTime.now();
+                  final rawDate = p['created_at'] ?? p['date'] ?? p['tanggal'];
+                  if (rawDate != null) {
+                    try {
+                      date = DateTime.parse(rawDate.toString());
+                    } catch (_) {}
+                  }
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(15),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                item['namaTempat'] ?? item['nama_tempat'] ?? '-',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                              Expanded(
+                                child: Text(
+                                  packageName,
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                 ),
                               ),
+                              PopupMenuButton<String>(
+                                onSelected: (v) {
+                                  if (v == 'delete' && paymentId != 0) {
+                                    _confirmDelete(paymentId);
+                                  }
+                                },
+                                itemBuilder: (_) => [
+                                  const PopupMenuItem(value: 'delete', child: Text('Hapus')),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                              const SizedBox(width: 6),
+                              Text(dateFormat.format(date), style: const TextStyle(color: Colors.grey)),
+                              const Spacer(),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: getStatusColor(item['status'] ?? ''),
+                                  color: statusColor.withOpacity(0.12),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  item['status'] ?? '-',
-                                  style: TextStyle(
-                                    color: getStatusTextColor(item['status'] ?? ''),
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  status,
+                                  style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w600),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
-                              const SizedBox(width: 6),
-                              Text(item['tanggal'] ?? '-', style: const TextStyle(color: Colors.grey)),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.people, size: 18, color: Colors.grey),
-                              const SizedBox(width: 6),
-                              Text('${item['jumlahOrang'] ?? item['jumlah_orang'] ?? '-'} orang', style: const TextStyle(color: Colors.grey)),
+                              const Text('Total Pembayaran:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                              Text(
+                                rupiah.format(amount),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Total Pembayaran:', style: TextStyle(fontWeight: FontWeight.w500)),
-                              Text(
-                                formatRupiah(item['harga'] is int ? item['harga'] : int.tryParse(item['harga'].toString()) ?? 0),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
-                                  fontSize: 16,
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: paymentId == 0
+                                      ? null
+                                      : () {
+                                          if (_isPaid(status)) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => ETiketScreen(namaTempat: packageName, totalHarga: amount),
+                                              ),
+                                            );
+                                          } else {
+                                            _confirmPay(paymentId);
+                                          }
+                                        },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Theme.of(context).primaryColor,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  child: Text(_isPaid(status) ? 'Lihat E-Tiket' : 'Bayar'),
                                 ),
                               ),
                             ],
@@ -168,12 +264,12 @@ class RiwayatBookingScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  );
+                },
               );
             },
-          );
-        },
+          ),
+        ),
       ),
     );
   }
