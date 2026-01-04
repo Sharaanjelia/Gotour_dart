@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'e_tiket.dart';
+import 'pembayaran.dart';
 import 'services/api_service.dart';
 
 class RiwayatBookingScreen extends StatefulWidget {
@@ -41,30 +42,22 @@ class _RiwayatBookingScreenState extends State<RiwayatBookingScreen> {
     return s.contains('paid') || s.contains('selesai') || s.contains('success');
   }
 
-  Future<void> _confirmPay(int paymentId) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Konfirmasi Pembayaran'),
-        content: const Text('Lanjutkan pembayaran untuk transaksi ini?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Bayar')),
-        ],
+  void _goToPay({
+    required int paymentId,
+    required String packageName,
+    required int amount,
+  }) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PembayaranScreen(
+          namaTempat: packageName,
+          jumlahOrang: 1,
+          totalHarga: amount,
+          paymentId: paymentId,
+        ),
       ),
     );
-
-    if (ok != true) return;
-
-    try {
-      await _apiService.payPayment(paymentId);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pembayaran berhasil.')));
-      await _refresh();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-    }
   }
 
   Future<void> _confirmDelete(int paymentId) async {
@@ -160,7 +153,14 @@ class _RiwayatBookingScreenState extends State<RiwayatBookingScreen> {
 
                   final packageRaw = p['package'] ?? p['paket'];
                   final package = packageRaw is Map ? packageRaw : <dynamic, dynamic>{};
-                  final packageName = (p['package_name'] ?? package['name'] ?? package['nama'] ?? p['nama_paket'] ?? '-').toString();
+                  final packageName = (
+                    p['package_name'] ??
+                    p['nama_paket'] ??
+                    package['name'] ??
+                    package['title'] ??
+                    package['nama'] ??
+                    '-'
+                  ).toString();
 
                   final amountRaw = p['amount'] ?? p['total'] ?? p['total_amount'] ?? p['harga'] ?? 0;
                   final amount = int.tryParse(amountRaw.toString()) ?? 0;
@@ -248,7 +248,7 @@ class _RiwayatBookingScreenState extends State<RiwayatBookingScreen> {
                                               ),
                                             );
                                           } else {
-                                            _confirmPay(paymentId);
+                                            _goToPay(paymentId: paymentId, packageName: packageName, amount: amount);
                                           }
                                         },
                                   style: ElevatedButton.styleFrom(

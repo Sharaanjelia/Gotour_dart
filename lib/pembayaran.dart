@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'konfirmasi_pembayaran.dart';
+import 'services/api_service.dart';
 
 // Halaman Pembayaran
 class PembayaranScreen extends StatefulWidget {
   final String namaTempat;
   final int jumlahOrang;
   final int totalHarga;
+  final int? paymentId;
 
   const PembayaranScreen({
     super.key,
     required this.namaTempat,
     required this.jumlahOrang,
     required this.totalHarga,
+    this.paymentId,
   });
 
   @override
@@ -21,6 +24,21 @@ class PembayaranScreen extends StatefulWidget {
 class _PembayaranScreenState extends State<PembayaranScreen> {
   // Metode pembayaran yang dipilih
   String metodePembayaran = '';
+
+  final ApiService _apiService = ApiService();
+
+  String _toApiPaymentMethod(String uiValue) {
+    // Backend biasanya hanya menerima enum sederhana seperti: transfer
+    // Sementara UI menampilkan label seperti: "Transfer - Mandiri".
+    // Agar tidak gagal validasi, kita normalisasi ke nilai yang aman.
+    final v = uiValue.trim().toLowerCase();
+    if (v.isEmpty) return 'transfer';
+    if (v.startsWith('transfer')) return 'transfer';
+
+    // Jika backend kamu mendukung e-wallet/kartu kredit, kamu bisa sesuaikan di sini.
+    // Untuk saat ini fallback ke 'transfer' agar tidak invalid.
+    return 'transfer';
+  }
 
   // Kategori metode pembayaran
   final Map<String, List<Map<String, dynamic>>> kategoriMetode = {
@@ -60,12 +78,37 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
   }
 
   // Fungsi untuk proses pembayaran
-  void prosesPembayaran() {
+  Future<void> prosesPembayaran() async {
     if (metodePembayaran.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Pilih metode pembayaran!')));
       return;
+    }
+
+    // Jika paymentId tersedia, update status pembayaran di backend dulu.
+    if (widget.paymentId != null) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        final apiMethod = _toApiPaymentMethod(metodePembayaran);
+        await _apiService.payPayment(
+          widget.paymentId!,
+          paymentMethod: apiMethod,
+        );
+      } catch (e) {
+        if (mounted) Navigator.pop(context); // tutup loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal bayar: $e')),
+        );
+        return;
+      }
+
+      if (mounted) Navigator.pop(context); // tutup loading
     }
 
     // Navigasi ke konfirmasi pembayaran
@@ -235,7 +278,7 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
         child: SizedBox(
           height: 50,
           child: ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (metodePembayaran.isEmpty) {
                 // Tampilkan bottomsheet untuk pilih metode
                 showModalBottomSheet(
@@ -287,7 +330,7 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
                   },
                 );
               } else {
-                prosesPembayaran();
+                await prosesPembayaran();
               }
             },
             style: ElevatedButton.styleFrom(

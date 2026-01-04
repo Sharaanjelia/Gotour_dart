@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import 'pembayaran.dart';
 import 'services/api_service.dart';
-import 'riwayat_booking.dart';
 
 class DetailPaketScreen extends StatefulWidget {
   final int packageId;
@@ -310,11 +311,14 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
     );
 
     try {
-      await _apiService.createPayment({
+      final created = await _apiService.createPayment({
         'package_id': package['id'],
         'amount': package['price'],
         'payment_method': 'transfer',
       });
+
+      final idRaw = created['id'] ?? created['payment_id'];
+      final paymentId = int.tryParse(idRaw?.toString() ?? '');
 
       Navigator.pop(context); // Tutup loading
 
@@ -329,7 +333,12 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const RiwayatBookingScreen(),
+            builder: (context) => PembayaranScreen(
+              namaTempat: (package['name'] ?? package['title'] ?? '-').toString(),
+              jumlahOrang: 1,
+              totalHarga: int.tryParse((package['price'] ?? 0).toString()) ?? 0,
+              paymentId: paymentId,
+            ),
         ),
       );
     } catch (e) {

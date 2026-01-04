@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'pembayaran.dart';
 import 'services/api_service.dart';
-import 'riwayat_booking.dart';
 
 // Halaman Detail Paket Wisata (API)
 class DetailPaketScreen extends StatefulWidget {
@@ -127,7 +128,11 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                               const SizedBox(height: 16),
                               Text(
                                 rupiah.format(price),
-                                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).primaryColor,
+                                ),
                               ),
                               const SizedBox(height: 20),
                               const Text('Deskripsi Paket', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -185,7 +190,7 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                       ? rawUserId
                       : (rawUserId is String ? int.tryParse(rawUserId.trim()) : null);
 
-                  await _apiService.createPayment({
+                  final created = await _apiService.createPayment({
                     'package_id': widget.packageId,
                     'amount': price,
                     'payment_method': 'transfer',
@@ -196,14 +201,24 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                     if (userId != null) 'user_id': userId,
                   });
 
+                  final idRaw = created['id'] ?? created['payment_id'];
+                  final paymentId = int.tryParse(idRaw?.toString() ?? '');
+
                   if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Booking berhasil, cek riwayat pembayaran.')),
+                    const SnackBar(content: Text('Booking berhasil, lanjut ke pembayaran.')),
                   );
 
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const RiwayatBookingScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => PembayaranScreen(
+                        namaTempat: name,
+                        jumlahOrang: 1,
+                        totalHarga: price,
+                        paymentId: paymentId,
+                      ),
+                    ),
                   );
                 } catch (e) {
                   if (!mounted) return;
