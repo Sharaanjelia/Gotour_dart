@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'services/api_service.dart';
 import 'riwayat_booking.dart';
 
@@ -174,10 +175,25 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                 if (confirm != true) return;
 
                 try {
+                  final prefs = await SharedPreferences.getInstance();
+                  final userName = (prefs.getString('user_name') ?? '').trim();
+                  final userEmail = (prefs.getString('user_email') ?? '').trim();
+                  // On web, values may be stored as String even if logically an int (e.g. "18").
+                  // Calling getInt on a String value can throw a TypeError, so we read dynamically.
+                  final dynamic rawUserId = prefs.get('user_id');
+                  final int? userId = rawUserId is int
+                      ? rawUserId
+                      : (rawUserId is String ? int.tryParse(rawUserId.trim()) : null);
+
                   await _apiService.createPayment({
                     'package_id': widget.packageId,
                     'amount': price,
                     'payment_method': 'transfer',
+                    // Backend sering butuh field customer
+                    if (userName.isNotEmpty) 'full_name': userName,
+                    if (userName.isNotEmpty) 'name': userName,
+                    if (userEmail.isNotEmpty) 'email': userEmail,
+                    if (userId != null) 'user_id': userId,
                   });
 
                   if (!mounted) return;

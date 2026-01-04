@@ -14,17 +14,108 @@ class ApiService {
   static const String _baseUrlWeb = 'http://127.0.0.1:8000/api';
   static String get baseUrl => kIsWeb ? _baseUrlWeb : _baseUrlAndroidEmulator;
 
+  static String get _serverOrigin {
+    // baseUrl selalu berakhiran /api
+    return baseUrl.replaceFirst(RegExp(r'\/api\/?$'), '');
+  }
+
+  String _toAbsoluteUrl(String? maybeRelative) {
+    final raw = (maybeRelative ?? '').trim();
+    if (raw.isEmpty) return '';
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    if (raw.startsWith('/')) return '$_serverOrigin$raw';
+    // Kadang backend mengirim path seperti: packages/xxx.jpg (relative ke /storage)
+    if (raw.startsWith('storage/')) return '$_serverOrigin/$raw';
+    return '$_serverOrigin/storage/$raw';
+  }
+
+  Map<String, dynamic> _normalizePackage(Map<String, dynamic> src) {
+    final out = Map<String, dynamic>.from(src);
+
+    // Nama paket: backend sering pakai `title`
+    out['name'] ??= out['title'];
+
+    // Photo: backend pakai `cover_image_url` (biasanya /storage/..)
+    final coverUrl = out['cover_image_url']?.toString();
+    final coverImage = out['cover_image']?.toString();
+    final candidate = coverUrl?.isNotEmpty == true ? coverUrl : coverImage;
+    if ((out['photo'] == null || out['photo'].toString().trim().isEmpty) && (candidate ?? '').trim().isNotEmpty) {
+      out['photo'] = _toAbsoluteUrl(candidate);
+    } else if (out['photo'] != null) {
+      out['photo'] = _toAbsoluteUrl(out['photo']?.toString());
+    }
+
+    // Konsistensi field image_url juga sering dipakai di beberapa layar
+    if ((out['image_url'] == null || out['image_url'].toString().trim().isEmpty) && (out['photo']?.toString().trim().isNotEmpty ?? false)) {
+      out['image_url'] = out['photo'];
+    } else if (out['image_url'] != null) {
+      out['image_url'] = _toAbsoluteUrl(out['image_url']?.toString());
+    }
+
+    // Description fallback: beberapa list API hanya punya excerpt
+    out['description'] ??= out['excerpt'];
+    return out;
+  }
+
+  String _bodySnippet(String body, {int max = 240}) {
+    final trimmed = body.trim();
+    if (trimmed.isEmpty) return '(empty body)';
+    final singleLine = trimmed.replaceAll(RegExp(r'\s+'), ' ');
+    if (singleLine.length <= max) return singleLine;
+    return '${singleLine.substring(0, max)}…';
+  }
+
+  bool _looksLikeJson(String body) {
+    final trimmed = body.trimLeft();
+    return trimmed.startsWith('{') || trimmed.startsWith('[');
+  }
+
+  bool _isJsonResponse(http.Response response) {
+    final contentType = (response.headers['content-type'] ?? '').toLowerCase();
+    if (contentType.contains('application/json')) return true;
+    return _looksLikeJson(response.body);
+  }
+
   Map<String, dynamic> _decodeJsonObject(String body) {
-    final decoded = json.decode(body);
-    if (decoded is Map<String, dynamic>) return decoded;
-    return <String, dynamic>{'data': decoded};
+    final trimmed = body.trim();
+    if (trimmed.isEmpty) return <String, dynamic>{};
+
+    // Banyak error backend (Laravel/PHP) balas HTML (<br><b>...) yang bikin jsonDecode gagal.
+    // Kita kasih error yang lebih jelas.
+    final lower = trimmed.toLowerCase();
+    final looksHtml =
+        lower.startsWith('<!doctype html') ||
+        lower.startsWith('<html') ||
+        lower.contains('<br') ||
+        lower.contains('<b>') ||
+        lower.contains('<body') ||
+        lower.contains('<head');
+    if (looksHtml && !_looksLikeJson(trimmed)) {
+      throw const FormatException('Response bukan JSON (terdeteksi HTML).');
+    }
+
+    try {
+      final decoded = json.decode(trimmed);
+      if (decoded is Map<String, dynamic>) return decoded;
+      return <String, dynamic>{'data': decoded};
+    } on FormatException {
+      throw FormatException('Response bukan JSON. Body: ${_bodySnippet(trimmed)}');
+    }
   }
 
   dynamic _unwrapData(dynamic decoded) {
-    if (decoded is Map && decoded.containsKey('data')) {
-      return decoded['data'];
+    // Banyak API (terutama Laravel + Resource/Pagination) membungkus payload di dalam
+    // `data`, dan kadang bertingkat: { data: { data: [...] } }.
+    // Kita unwrap beberapa level agar getter list (packages/blogs/dll) tidak terbaca kosong.
+    dynamic current = decoded;
+    for (var i = 0; i < 3; i++) {
+      if (current is Map && current.containsKey('data')) {
+        current = current['data'];
+        continue;
+      }
+      break;
     }
-    return decoded;
+    return current;
   }
 
   String _extractMessage(dynamic decoded, {String fallback = 'Terjadi kesalahan'}) {
@@ -36,6 +127,25 @@ class ApiService {
 
       final errors = decoded['errors'];
       if (errors is Map && errors.isNotEmpty) {
+        // Gabungkan semua error validation agar lebih jelas di UI.
+        final parts = <String>[];
+        for (final entry in errors.entries) {
+          final key = entry.key.toString();
+          final val = entry.value;
+          if (val is List) {
+            final msgs = val.map((e) => e.toString()).where((s) => s.trim().isNotEmpty).toList();
+            if (msgs.isNotEmpty) {
+              parts.add('$key: ${msgs.join(' ')}');
+            }
+          } else if (val != null) {
+            final s = val.toString();
+            if (s.trim().isNotEmpty) {
+              parts.add('$key: $s');
+            }
+          }
+        }
+        if (parts.isNotEmpty) return parts.join(' | ');
+
         final first = errors.values.first;
         if (first is List && first.isNotEmpty) return first.first.toString();
         return first.toString();
@@ -75,22 +185,79 @@ class ApiService {
 
   // ========== GET METHODS ==========
 
+  // GET /favorites (dengan auth)
+  // Beberapa backend memakai route singular: /favorite
+  Future<List> getFavorites() async {
+    try {
+      final paths = <String>['favorites', 'favorite'];
+
+      for (final path in paths) {
+        final uri = Uri.parse('$baseUrl/$path');
+        final response = await http.get(
+          uri,
+          headers: await getHeaders(withAuth: true),
+        );
+
+        // Hanya fallback jika endpoint benar-benar tidak ada.
+        if (response.statusCode == 404) {
+          continue;
+        }
+
+        if (!_isJsonResponse(response)) {
+          throw Exception(
+            'Endpoint ${uri.toString()} mengembalikan non-JSON (HTTP ${response.statusCode}). '
+            'Body: ${_bodySnippet(response.body)}',
+          );
+        }
+
+        if (response.statusCode == 200) {
+          final decoded = _decodeJsonObject(response.body);
+          final data = _unwrapData(decoded);
+          if (data is List) return data;
+          return const [];
+        } else {
+          final decoded = _decodeJsonObject(response.body);
+          final message = _extractMessage(decoded, fallback: 'Gagal mengambil favorit');
+          throw Exception('$message (HTTP ${response.statusCode})');
+        }
+      }
+
+      throw Exception('Endpoint favorites tidak ditemukan (coba /favorites atau /favorite)');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
   // GET /packages
   Future<List> getPackages() async {
     try {
+      final uri = Uri.parse('$baseUrl/packages');
       final response = await http.get(
-        Uri.parse('$baseUrl/packages'),
+        uri,
         headers: await getHeaders(),
       );
+
+      if (!_isJsonResponse(response)) {
+        throw Exception(
+          'Endpoint ${uri.toString()} mengembalikan non-JSON (HTTP ${response.statusCode}). '
+          'Kemungkinan URL salah, backend error, atau route mengarah ke halaman web. '
+          'Body: ${_bodySnippet(response.body)}',
+        );
+      }
 
       if (response.statusCode == 200) {
         final decoded = _decodeJsonObject(response.body);
         final data = _unwrapData(decoded);
-        if (data is List) return data;
+        if (data is List) {
+          return data
+              .map((e) => e is Map ? _normalizePackage(Map<String, dynamic>.from(e)) : e)
+              .toList();
+        }
         return const [];
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal mengambil data paket'));
+        final message = _extractMessage(decoded, fallback: 'Gagal mengambil data paket');
+        throw Exception('$message (HTTP ${response.statusCode})');
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -100,19 +267,28 @@ class ApiService {
   // GET /packages/{id}
   Future<Map> getPackageDetail(int id) async {
     try {
+      final uri = Uri.parse('$baseUrl/packages/$id');
       final response = await http.get(
-        Uri.parse('$baseUrl/packages/$id'),
+        uri,
         headers: await getHeaders(),
       );
+
+      if (!_isJsonResponse(response)) {
+        throw Exception(
+          'Endpoint ${uri.toString()} mengembalikan non-JSON (HTTP ${response.statusCode}). '
+          'Body: ${_bodySnippet(response.body)}',
+        );
+      }
 
       if (response.statusCode == 200) {
         final decoded = _decodeJsonObject(response.body);
         final data = _unwrapData(decoded);
-        if (data is Map) return data;
+        if (data is Map) return _normalizePackage(Map<String, dynamic>.from(data));
         return <String, dynamic>{};
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal mengambil detail paket'));
+        final message = _extractMessage(decoded, fallback: 'Gagal mengambil detail paket');
+        throw Exception('$message (HTTP ${response.statusCode})');
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -520,6 +696,44 @@ class ApiService {
   }
 
   // ========== DELETE METHODS ==========
+
+  // DELETE /favorites/{id} (dengan auth)
+  // Beberapa backend memakai route singular: /favorite/{id}
+  Future<bool> deleteFavorite(int id) async {
+    try {
+      final paths = <String>['favorites', 'favorite'];
+
+      for (final path in paths) {
+        final uri = Uri.parse('$baseUrl/$path/$id');
+        final response = await http.delete(
+          uri,
+          headers: await getHeaders(withAuth: true),
+        );
+
+        if (response.statusCode == 404) {
+          continue;
+        }
+
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          return true;
+        }
+
+        if (_isJsonResponse(response)) {
+          final decoded = _decodeJsonObject(response.body);
+          final message = _extractMessage(decoded, fallback: 'Gagal menghapus favorit');
+          throw Exception('$message (HTTP ${response.statusCode})');
+        }
+
+        throw Exception(
+          'Gagal menghapus favorit (HTTP ${response.statusCode}). Body: ${_bodySnippet(response.body)}',
+        );
+      }
+
+      throw Exception('Endpoint favorites tidak ditemukan untuk delete');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
 
   // DELETE /packages/{id} (dengan auth)
   Future<bool> deletePackage(int id) async {

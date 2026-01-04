@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'e_tiket.dart';
 import 'favorite.dart';
+import 'testimonial_screen.dart';
 import 'itinerary.dart';
 import 'layanan_bantuan.dart';
 import 'login.dart';
@@ -279,7 +280,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon: Icons.rate_review,
                           title: 'Testimoni',
                           onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteScreen()));
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const TestimonialScreen()));
                           },
                         ),
                         const Divider(height: 1),

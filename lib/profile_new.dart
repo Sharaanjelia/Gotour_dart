@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/api_service.dart';
 import 'riwayat_booking.dart';
+import 'favorite.dart';
 import 'login.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -211,10 +212,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: const Text('Paket Favorit'),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () {
-                          // Navigate to favorites
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Paket Favorit (Coming Soon)'),
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const FavoriteScreen(),
                             ),
                           );
                         },

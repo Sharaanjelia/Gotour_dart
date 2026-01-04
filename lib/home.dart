@@ -1362,7 +1362,9 @@ class PaketWisataCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isNetwork = gambar.startsWith('http://') || gambar.startsWith('https://');
+    final trimmedGambar = gambar.trim();
+    final isNetwork = trimmedGambar.startsWith('http://') || trimmedGambar.startsWith('https://');
+    final isEmptyPath = trimmedGambar.isEmpty;
 
     return GestureDetector(
       onTap: onTap,
@@ -1389,35 +1391,42 @@ class PaketWisataCard extends StatelessWidget {
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
               ),
-              child: isNetwork
-                  ? Image.network(
-                      gambar,
+              child: isEmptyPath
+                  ? Container(
                       width: 200,
                       height: 120,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 200,
-                          height: 120,
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                        );
-                      },
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.image, size: 50, color: Colors.grey),
                     )
-                  : Image.asset(
-                      gambar,
-                      width: 200,
-                      height: 120,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
+                  : isNetwork
+                      ? Image.network(
+                          trimmedGambar,
                           width: 200,
                           height: 120,
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.image, size: 50, color: Colors.grey),
-                        );
-                      },
-                    ),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 200,
+                              height: 120,
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                            );
+                          },
+                        )
+                      : Image.asset(
+                          trimmedGambar,
+                          width: 200,
+                          height: 120,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 200,
+                              height: 120,
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                            );
+                          },
+                        ),
             ),
             // Info Section
             Padding(

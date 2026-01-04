@@ -320,7 +320,12 @@ class _TestimonialScreenState extends State<TestimonialScreen> {
 
                     try {
                       final prefs = await SharedPreferences.getInstance();
-                      final userId = prefs.getInt('user_id') ?? int.tryParse(prefs.getString('user_id') ?? '');
+                      // On web, values may be stored as String (e.g. "18") even if logically an int.
+                      // Calling getInt on a String value can throw a TypeError, so we read dynamically.
+                      final dynamic rawUserId = prefs.get('user_id');
+                      final int? userId = rawUserId is int
+                          ? rawUserId
+                          : (rawUserId is String ? int.tryParse(rawUserId.trim()) : null);
 
                       if (userId == null) {
                         Navigator.pop(ctx);
