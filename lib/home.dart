@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'rekomendasi_gaya_foto.dart';
 import 'paket_wisata.dart';
 import 'profile.dart';
@@ -7,11 +10,15 @@ import 'blog_wisata.dart';
 import 'itinerary.dart';
 import 'e_tiket.dart';
 import 'notifikasi.dart';
+import 'riwayat_booking.dart';
+
+import 'detail_paket.dart';
+import 'services/api_service.dart';
+import 'services_screen.dart';
 
 // Halaman Home/Beranda
 class HomeScreen extends StatefulWidget {
-  final String namaUser;
-  const HomeScreen({super.key, this.namaUser = "Shara"});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -22,19 +29,13 @@ class _HomeScreenState extends State<HomeScreen> {
   int currentIndex = 0;
 
   // Daftar halaman untuk bottom navigation
-  late final List<Widget> pages;
-
-  @override
-  void initState() {
-    super.initState();
-    pages = [
-      BerandaPage(namaUser: widget.namaUser),
-      const PaketWisataScreen(),
-      const BookingPlaceholder(),
-      const FavoriteScreen(),
-      ProfileScreen(token: 'dummy_token'), // Ganti dengan token asli jika sudah ada
-    ];
-  }
+  final List<Widget> pages = [
+    const BerandaPage(),
+    const PaketWisataScreen(),
+    const RiwayatBookingScreen(),
+    const FavoriteScreen(),
+    const ProfileScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
             currentIndex = index;
           });
         },
-        selectedItemColor: Colors.blue[700],
+        selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor: Colors.grey[600],
         type: BottomNavigationBarType.fixed,
         showUnselectedLabels: true,
@@ -65,269 +66,472 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // Halaman Beranda (konten utama)
-class BerandaPage extends StatelessWidget {
-  final String namaUser;
-  const BerandaPage({super.key, this.namaUser = "Shara"});
+class BerandaPage extends StatefulWidget {
+  const BerandaPage({super.key});
+
+  @override
+  State<BerandaPage> createState() => _BerandaPageState();
+}
+
+class _BerandaPageState extends State<BerandaPage> {
+  final ApiService _apiService = ApiService();
+  late Future<List> _packagesFuture;
+  late Future<List> _discountsFuture;
+  late Future<List> _testimonialsFuture;
+  String _userName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _packagesFuture = _apiService.getPackages();
+    _discountsFuture = _apiService.getDiscounts();
+    _testimonialsFuture = _apiService.getTestimonials();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString('user_name') ?? '';
+    if (!mounted) return;
+    setState(() => _userName = name);
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _packagesFuture = _apiService.getPackages();
+      _discountsFuture = _apiService.getDiscounts();
+      _testimonialsFuture = _apiService.getTestimonials();
+    });
+    await Future.wait([_packagesFuture, _discountsFuture, _testimonialsFuture]);
+  }
+
+  int _asInt(dynamic v) {
+    if (v is int) return v;
+    if (v is double) return v.round();
+    return int.tryParse(v?.toString() ?? '') ?? 0;
+  }
+
+  double _asDouble(dynamic v) {
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.tryParse(v?.toString() ?? '') ?? 0.0;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+    final rupiah = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue.shade700, Colors.blue.shade400],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Hi, ${namaUser[0].toUpperCase()}${namaUser.substring(1)} 👋',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 6),
-                            const Text('Mau jalan-jalan kemana hari ini?',
-                                style: TextStyle(color: Colors.white70)),
-                          ],
-                        ),
-                        IconButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const NotifikasiScreen(),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.notifications, color: Colors.white),
-                        ),
-                      ],
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.blue.shade700, Colors.blue.shade400],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    const SizedBox(height: 12),
-                    // Search
-                    Container(
-                      margin: const EdgeInsets.only(top: 6),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Cari destinasi atau paket wisata...',
-                          prefixIcon: const Icon(Icons.search),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide.none,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(24),
+                      bottomRight: Radius.circular(24),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Hi, ${_userName.isNotEmpty ? _userName : 'Traveler'} 👋',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Mau jalan-jalan kemana hari ini?',
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const NotifikasiScreen()),
+                              );
+                            },
+                            icon: const Icon(Icons.notifications, color: Colors.white),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Search
+                      Container(
+                        margin: const EdgeInsets.only(top: 6),
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Cari destinasi atau paket wisata...',
+                            prefixIcon: const Icon(Icons.search),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              borderSide: BorderSide.none,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Menu icons - 4 items (2x2)
-                    Column(
-                      children: [
-                        // Row 1
-                        Row(
-                          children: [
-                            Expanded(
-                              child: SmallMenu(
-                                icon: Icons.map,
-                                title: 'Paket Wisata',
-                                color: Colors.blue[100]!,
-                                iconColor: Colors.blue[700]!,
-                                onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const PaketWisataScreen())); },
+                      const SizedBox(height: 16),
+                      // Menu icons - 4 items (2x2)
+                      Column(
+                        children: [
+                          // Row 1
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SmallMenu(
+                                  icon: Icons.map,
+                                  title: 'Paket Wisata',
+                                  color: Colors.blue[100]!,
+                                  iconColor: Colors.blue[700]!,
+                                  onTap: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const PaketWisataScreen()));
+                                  },
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: SmallMenu(
-                                icon: Icons.calendar_today,
-                                title: 'Itinerary',
-                                color: Colors.purple[100]!,
-                                iconColor: Colors.purple[700]!,
-                                onTap: () {},
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: SmallMenu(
+                                  icon: Icons.calendar_today,
+                                  title: 'Itinerary',
+                                  color: Colors.purple[100]!,
+                                  iconColor: Colors.purple[700]!,
+                                  onTap: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ItineraryScreen()));
+                                  },
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        // Row 2
-                        Row(
-                          children: [
-                            Expanded(
-                              child: SmallMenu(
-                                icon: Icons.camera_alt,
-                                title: 'Gaya Foto',
-                                color: Colors.pink[100]!,
-                                iconColor: Colors.pink[700]!,
-                                onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const RekomendasiGayaFotoScreen())); },
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          // Row 2
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SmallMenu(
+                                  icon: Icons.camera_alt,
+                                  title: 'Gaya Foto',
+                                  color: Colors.pink[100]!,
+                                  iconColor: Colors.pink[700]!,
+                                  onTap: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const RekomendasiGayaFotoScreen()));
+                                  },
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: SmallMenu(
-                                icon: Icons.auto_stories,
-                                title: 'Blog Wisata',
-                                color: Colors.indigo[100]!,
-                                iconColor: Colors.indigo[700]!,
-                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BlogWisataScreen() as Widget)),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: SmallMenu(
+                                  icon: Icons.auto_stories,
+                                  title: 'Blog Wisata',
+                                  color: Colors.indigo[100]!,
+                                  iconColor: Colors.indigo[700]!,
+                                  onTap: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const BlogWisataScreen()));
+                                  },
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                  ],
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              // Promo & Diskon
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Promo & Diskon',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                // Promo & Diskon
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Promo & Diskon',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                       ),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: Text(
-                        'Lihat Semua',
-                        style: TextStyle(
-                          color: Colors.blue[700],
-                          fontWeight: FontWeight.w600,
-                        ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const ServicesScreen()));
+                        },
+                        child: Text('Lihat Semua', style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              SizedBox(
-                height: 145,
-                child: PromoCarousel(),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Paket Wisata Populer
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Paket Wisata Populer',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const PaketWisataScreen(),
+                const SizedBox(height: 4),
+                SizedBox(
+                  height: 145,
+                  child: FutureBuilder<List>(
+                    future: _discountsFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: TextButton(
+                            onPressed: _refresh,
+                            child: Text('Gagal memuat promo. Tap untuk coba lagi', style: TextStyle(color: primary)),
                           ),
                         );
-                      },
-                      child: Text(
-                        'Lihat Semua',
-                        style: TextStyle(
-                          color: Colors.blue[700],
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 4),
-              SizedBox(
-                height: 240,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  children: [
-                    PaketWisataCard(
-                      nama: 'Barusan Hills Satu',
-                      harga: 'Rp 1.500.000',
-                      durasi: '2 Hari 1 Malam',
-                      rating: 4.8,
-                      gambar: 'assets/images/Barusen Hills Ciwidey.jpg',
-                    ),
-                    PaketWisataCard(
-                      nama: 'Ciwidey Valley',
-                      harga: 'Rp 1.000.000',
-                      durasi: '3 Hari 2 Malam',
-                      rating: 4.7,
-                      gambar: 'assets/images/Ciwidey Valley Hot Spring Waterpark Resort.jpg',
-                    ),
-                    PaketWisataCard(
-                      nama: 'Tafsor Barn',
-                      harga: 'Rp 679.000',
-                      durasi: '1 Hari',
-                      rating: 4.6,
-                      gambar: 'assets/images/tafsor barn.jpg',
-                    ),
-                    PaketWisataCard(
-                      nama: 'Orchid Forest Cikole',
-                      harga: 'Rp 850.000',
-                      durasi: '1 Hari',
-                      rating: 4.7,
-                      gambar: 'assets/images/orchid forest cikole.jpg',
-                    ),
-                    PaketWisataCard(
-                      nama: 'Lodge Maribaya',
-                      harga: 'Rp 1.200.000',
-                      durasi: '2 Hari 1 Malam',
-                      rating: 4.8,
-                      gambar: 'assets/images/The Lodge Maribaya.jpg',
-                    ),
-                    PaketWisataCard(
-                      nama: 'Kawah Putih Ciwidey',
-                      harga: 'Rp 500.000',
-                      durasi: '1 Hari',
-                      rating: 4.9,
-                      gambar: 'assets/images/kawah putih ciwidey.webp',
-                    ),
-                  ],
-                ),
-              ),
+                      }
+                      final discounts = snapshot.data ?? const [];
+                      if (discounts.isEmpty) {
+                        return Center(
+                          child: Text('Belum ada promo.', style: TextStyle(color: Colors.grey[700])),
+                        );
+                      }
 
-              const SizedBox(height: 30),
-            ],
+                      final items = discounts.take(6).toList();
+                      return ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final d = items[index] is Map ? items[index] as Map : <dynamic, dynamic>{};
+                          final title = (d['title'] ?? d['judul'] ?? d['name'] ?? d['nama'] ?? 'Promo').toString();
+                          final code = (d['code'] ?? d['kode'] ?? d['coupon'] ?? '').toString();
+                          final percent = (d['percentage'] ?? d['percent'] ?? d['diskon'] ?? '').toString();
+                          return Container(
+                            width: 260,
+                            margin: const EdgeInsets.only(right: 12),
+                            child: Card(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              child: Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 8),
+                                    if (percent.isNotEmpty) Text('Diskon: $percent', style: TextStyle(color: Colors.grey[700])),
+                                    const SizedBox(height: 10),
+                                    if (code.isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: primary.withOpacity(0.12),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Text(code, style: TextStyle(color: primary, fontWeight: FontWeight.w700)),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Paket Wisata Populer
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Paket Wisata Populer',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const PaketWisataScreen()));
+                        },
+                        child: Text('Lihat Semua', style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                SizedBox(
+                  height: 240,
+                  child: FutureBuilder<List>(
+                    future: _packagesFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: TextButton(
+                            onPressed: _refresh,
+                            child: Text('Gagal memuat paket. Tap untuk coba lagi', style: TextStyle(color: primary)),
+                          ),
+                        );
+                      }
+                      final packages = snapshot.data ?? const [];
+                      if (packages.isEmpty) {
+                        return Center(child: Text('Belum ada paket.', style: TextStyle(color: Colors.grey[700])));
+                      }
+
+                      final items = packages.take(10).toList();
+                      return ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final pkg = items[index] is Map ? items[index] as Map : <dynamic, dynamic>{};
+                          final idRaw = pkg['id'] ?? pkg['package_id'] ?? 0;
+                          final packageId = int.tryParse(idRaw.toString()) ?? 0;
+                          final name = (pkg['name'] ?? pkg['nama'] ?? '-').toString();
+                          final imageUrl = (pkg['image'] ?? pkg['image_url'] ?? pkg['photo'] ?? pkg['thumbnail'] ?? '').toString();
+                          final price = _asInt(pkg['price'] ?? pkg['harga'] ?? pkg['amount'] ?? 0);
+                          final duration = (pkg['duration'] ?? pkg['durasi'] ?? pkg['days'] ?? pkg['lama'] ?? '-').toString();
+                          final rating = _asDouble(pkg['rating'] ?? pkg['rate'] ?? 0);
+
+                          return PaketWisataCard(
+                            nama: name,
+                            harga: rupiah.format(price),
+                            durasi: duration,
+                            rating: rating,
+                            gambar: imageUrl,
+                            onTap: packageId == 0
+                                ? null
+                                : () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => DetailPaketScreen(packageId: packageId)),
+                                    );
+                                  },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Testimoni
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Testimoni',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteScreen()));
+                        },
+                        child: Text('Lihat Semua', style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                SizedBox(
+                  height: 150,
+                  child: FutureBuilder<List>(
+                    future: _testimonialsFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: TextButton(
+                            onPressed: _refresh,
+                            child: Text('Gagal memuat testimoni. Tap untuk coba lagi', style: TextStyle(color: primary)),
+                          ),
+                        );
+                      }
+                      final testimonials = snapshot.data ?? const [];
+                      if (testimonials.isEmpty) {
+                        return Center(child: Text('Belum ada testimoni.', style: TextStyle(color: Colors.grey[700])));
+                      }
+
+                      final items = testimonials.take(8).toList();
+                      return ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final t = items[index] is Map ? items[index] as Map : <dynamic, dynamic>{};
+                          final userName = (t['user_name'] ?? t['name'] ?? 'User').toString();
+                          final review = (t['review'] ?? t['message'] ?? t['komentar'] ?? '').toString();
+                          final rating = _asDouble(t['rating'] ?? 0);
+
+                          return Container(
+                            width: 260,
+                            margin: const EdgeInsets.only(right: 12),
+                            child: Card(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              child: Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(userName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.star, size: 16, color: Colors.amber),
+                                        const SizedBox(width: 4),
+                                        Text(rating.toStringAsFixed(1)),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Expanded(
+                                      child: Text(
+                                        review.isNotEmpty ? review : '-',
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(color: Colors.grey[700]),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+              ],
+            ),
           ),
         ),
       ),
@@ -1144,6 +1348,7 @@ class PaketWisataCard extends StatelessWidget {
   final String durasi;
   final double rating;
   final String gambar;
+  final VoidCallback? onTap;
 
   const PaketWisataCard({
     super.key,
@@ -1152,108 +1357,127 @@ class PaketWisataCard extends StatelessWidget {
     required this.durasi,
     required this.rating,
     required this.gambar,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 200,
-      margin: const EdgeInsets.only(right: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image Section
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
+    final isNetwork = gambar.startsWith('http://') || gambar.startsWith('https://');
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 200,
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-            child: Image.asset(
-              gambar,
-              width: 200,
-              height: 120,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: 200,
-                  height: 120,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.image, size: 50, color: Colors.grey),
-                );
-              },
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image Section
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              child: isNetwork
+                  ? Image.network(
+                      gambar,
+                      width: 200,
+                      height: 120,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 200,
+                          height: 120,
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                        );
+                      },
+                    )
+                  : Image.asset(
+                      gambar,
+                      width: 200,
+                      height: 120,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 200,
+                          height: 120,
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                        );
+                      },
+                    ),
             ),
-          ),
-          // Info Section
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  nama,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+            // Info Section
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nama,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.access_time, size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      durasi,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      harga,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[700],
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, size: 14, color: Colors.amber),
-                        const SizedBox(width: 2),
-                        Text(
-                          rating.toString(),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          durasi,
+                          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        harga,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          const Icon(Icons.star, size: 14, color: Colors.amber),
+                          const SizedBox(width: 2),
+                          Text(
+                            rating.toStringAsFixed(1),
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

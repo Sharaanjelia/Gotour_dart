@@ -1,84 +1,113 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'login.dart';
-import 'layanan_bantuan.dart';
-import 'favorite.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'e_tiket.dart';
-import 'promo_list.dart' as promo;
-import 'blog_wisata.dart';
+import 'favorite.dart';
 import 'itinerary.dart';
+import 'layanan_bantuan.dart';
+import 'login.dart';
+import 'blog_wisata.dart';
 import 'rekomendasi_gaya_foto.dart';
 import 'riwayat_booking.dart';
+import 'services/api_service.dart';
+import 'services_screen.dart';
 import 'settings.dart';
 
 // Halaman Profile
-
-import 'api_laravel_profile.dart';
-
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
-// Fungsi untuk fetch data admin dari API
-Future<List<dynamic>> fetchAdminUser() async {
-  final response = await http.get(Uri.parse('http://yourdomain.com/api/Admin_User'));
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    // Jika response berupa objek dengan key 'data', ambil array dari 'data'
-    if (data is Map<String, dynamic> && data.containsKey('data')) {
-      return data['data'];
-    }
-    // Jika response langsung berupa array
-    if (data is List) {
-      return data;
-    }
-    // Jika tidak sesuai, kembalikan list kosong
-    return [];
-  } else {
-    throw Exception('Gagal mengambil data admin');
-  }
-}
-
-// Contoh penggunaan di widget (letakkan di dalam body atau di bawah tombol logout):
-//
-// Padding(
-//   padding: const EdgeInsets.all(20),
-//   child: SizedBox(
-//     height: 200,
-//     child: FutureBuilder<List<dynamic>>(
-//       future: fetchAdminUser(),
-//       builder: (context, snapshot) {
-//         if (snapshot.connectionState == ConnectionState.waiting) {
-//           return Center(child: CircularProgressIndicator());
-//         } else if (snapshot.hasError) {
-//           return Text('Error: \\${snapshot.error}');
-//         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-//           return Text('Tidak ada data admin');
-//         } else {
-//           return ListView.builder(
-//             itemCount: snapshot.data!.length,
-//             itemBuilder: (context, index) {
-//               final admin = snapshot.data![index];
-//               return ListTile(
-//                 title: Text(admin['nama'] ?? 'Tanpa Nama'),
-//                 subtitle: Text(admin['email'] ?? ''),
-//               );
-//             },
-//           );
-//         }
-//       },
-//     ),
-//   ),
-// ),
-
 class ProfileScreen extends StatefulWidget {
-  final String token;
-  const ProfileScreen({super.key, required this.token});
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final ApiService _apiService = ApiService();
+  bool _isUploading = false;
 
+  Future<void> _confirmLogout() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Konfirmasi Logout'),
+        content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('user_id');
+    await prefs.remove('user_name');
+    await prefs.remove('user_email');
+
+    if (!mounted) return;
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+  }
+
+  void _showPhotoSourceDialog(Map user) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Pilih Sumber Foto'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Kamera'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Galeri'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    if (_isUploading) return;
+
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: source, imageQuality: 80);
+      if (picked == null) return;
+
+      setState(() => _isUploading = true);
+      await _apiService.uploadProfilePhoto(File(picked.path));
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Foto profil berhasil diupload.')));
+      setState(() {});
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,370 +115,250 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Profil Saya'),
-        backgroundColor: Colors.blue[700],
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.api),
-            tooltip: 'Assessment 3',
-            onPressed: () {
-              Navigator.pushNamed(context, '/api-example');
-            },
-          ),
-        ],
       ),
-      body: FutureBuilder<Map<String, dynamic>?>(
-        future: fetchProfile(token: widget.token),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data == null) {
-            return const Center(child: Text('Gagal memuat data profil.'));
-          }
-          final user = snapshot.data!;
-          final nama = user['name'] ?? '-';
-          final email = user['email'] ?? '-';
-          final noHp = user['no_hp'] ?? '-';
-          final alamat = user['alamat'] ?? '-';
-          return SingleChildScrollView(
-            child: Column(
-              children: [
-                // Header Profile dengan background gradient
-                Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.blue[700]!, Colors.blue[400]!],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
+      body: SafeArea(
+        child: FutureBuilder<Map>(
+          future: _apiService.getUser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 60, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text('Error: ${snapshot.error}', textAlign: TextAlign.center),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(onPressed: () => setState(() {}), child: const Text('Retry')),
+                  ],
+                ),
+              );
+            }
+
+            final user = snapshot.data ?? <dynamic, dynamic>{};
+            final name = (user['name'] ?? user['nama'] ?? 'User').toString();
+            final email = (user['email'] ?? '').toString();
+            final phone = (user['phone'] ?? user['no_hp'] ?? user['telp'] ?? '-').toString();
+            final address = (user['address'] ?? user['alamat'] ?? '-').toString();
+            final photoUrl = (user['photo'] ?? user['photo_url'] ?? user['avatar'] ?? '').toString();
+
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Header
+                  Container(
+                    height: 220,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).primaryColor,
+                          Theme.of(context).primaryColor.withOpacity(0.7),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 4),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 52,
+                                  backgroundColor: Colors.white,
+                                  backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+                                  child: photoUrl.isEmpty
+                                      ? Text(
+                                          name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                                          style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                                        )
+                                      : null,
+                                ),
+                              ),
+                              if (_isUploading)
+                                Positioned.fill(
+                                  child: Container(
+                                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.35), shape: BoxShape.circle),
+                                    child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+                                  ),
+                                ),
+                              Positioned(
+                                bottom: 2,
+                                right: 2,
+                                child: CircleAvatar(
+                                  backgroundColor: Theme.of(context).primaryColor,
+                                  radius: 18,
+                                  child: IconButton(
+                                    icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                                    onPressed: () => _showPhotoSourceDialog(user),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            name,
+                            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(email, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                        ],
+                      ),
                     ),
                   ),
-                  child: Center(
+
+                  const SizedBox(height: 16),
+
+                  // Informasi
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 2, blurRadius: 5),
+                      ],
+                    ),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Avatar dengan border
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 4),
-                          ),
-                          child: CircleAvatar(
-                            radius: 50,
-                            backgroundColor: Colors.white,
-                            child: Icon(
-                              Icons.person,
-                              size: 50,
-                              color: Colors.blue[700],
-                            ),
-                          ),
+                        const Text(
+                          'Informasi Pribadi',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                         ),
-                        const SizedBox(height: 10),
-                        Text(
-                          nama,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        const Divider(height: 20),
+                        ProfileInfoItem(icon: Icons.phone, title: 'Nomor HP', value: phone),
+                        const SizedBox(height: 15),
+                        ProfileInfoItem(icon: Icons.location_on, title: 'Alamat', value: address),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Menu
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 2, blurRadius: 5),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        ProfileMenuItem(
+                          icon: Icons.receipt_long,
+                          title: 'Riwayat Pembayaran',
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const RiwayatBookingScreen()));
+                          },
                         ),
-                        const SizedBox(height: 5),
-                        Text(
-                          email,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
-                          ),
+                        const Divider(height: 1),
+                        ProfileMenuItem(
+                          icon: Icons.rate_review,
+                          title: 'Testimoni',
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteScreen()));
+                          },
+                        ),
+                        const Divider(height: 1),
+                        ProfileMenuItem(
+                          icon: Icons.local_offer,
+                          title: 'Layanan & Promo',
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const ServicesScreen()));
+                          },
+                        ),
+                        const Divider(height: 1),
+                        ProfileMenuItem(
+                          icon: Icons.article,
+                          title: 'Blog Wisata',
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const BlogWisataScreen()));
+                          },
+                        ),
+                        const Divider(height: 1),
+                        ProfileMenuItem(
+                          icon: Icons.map,
+                          title: 'Itinerary',
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const ItineraryScreen()));
+                          },
+                        ),
+                        const Divider(height: 1),
+                        ProfileMenuItem(
+                          icon: Icons.camera_alt,
+                          title: 'Rekomendasi Gaya Foto',
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const RekomendasiGayaFotoScreen()));
+                          },
+                        ),
+                        const Divider(height: 1),
+                        ProfileMenuItem(
+                          icon: Icons.help_outline,
+                          title: 'Bantuan',
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const LayananBantuanScreen()));
+                          },
+                        ),
+                        const Divider(height: 1),
+                        ProfileMenuItem(
+                          icon: Icons.settings,
+                          title: 'Pengaturan',
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                          },
                         ),
                       ],
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                // Informasi Pengguna
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Informasi Pribadi',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _confirmLogout,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
+                        child: const Text('Logout', style: TextStyle(fontSize: 16)),
                       ),
-                      const Divider(height: 20),
-                      ProfileInfoItem(
-                        icon: Icons.phone,
-                        title: 'Nomor HP',
-                        value: noHp,
-                      ),
-                      const SizedBox(height: 15),
-                      ProfileInfoItem(
-                        icon: Icons.location_on,
-                        title: 'Alamat',
-                        value: alamat,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Menu Items
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      ProfileMenuItem(
-                        icon: Icons.history,
-                        title: 'Riwayat Booking',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => RiwayatBookingScreen(token: widget.token) as Widget,
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ProfileMenuItem(
-                        icon: Icons.favorite_border,
-                        title: 'Favorit',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const FavoriteScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ProfileMenuItem(
-                        icon: Icons.confirmation_number,
-                        title: 'E-Tiket',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ETiketScreen(
-                                namaTempat: 'E-Tiket',
-                                totalHarga: 0,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ProfileMenuItem(
-                        icon: Icons.local_offer,
-                        title: 'Promo',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => promo.PromoListScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ProfileMenuItem(
-                        icon: Icons.article,
-                        title: 'Blog Wisata',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const BlogWisataScreen() as Widget,
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ProfileMenuItem(
-                        icon: Icons.map,
-                        title: 'Itinerary',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ItineraryScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ProfileMenuItem(
-                        icon: Icons.camera_alt,
-                        title: 'Rekomendasi Gaya Foto',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const RekomendasiGayaFotoScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ProfileMenuItem(
-                        icon: Icons.help_outline,
-                        title: 'Bantuan',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LayananBantuanScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ProfileMenuItem(
-                        icon: Icons.settings,
-                        title: 'Pengaturan',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Tampilkan daftar admin di bawah menu profil
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: SizedBox(
-                    height: 200,
-                    child: FutureBuilder<List<dynamic>>(
-                      future: fetchAdminUser(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        } else if (snapshot.hasError) {
-                          return Text('Error: \\${snapshot.error}');
-                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Text('Tidak ada data admin');
-                        } else {
-                          return ListView.builder(
-                            itemCount: snapshot.data!.length,
-                            itemBuilder: (context, index) {
-                              final admin = snapshot.data![index];
-                              return ListTile(
-                                leading: admin['photo'] != null
-                                    ? CircleAvatar(
-                                        backgroundImage: NetworkImage(admin['photo']),
-                                      )
-                                    : const CircleAvatar(child: Icon(Icons.person)),
-                                title: Text(admin['name'] ?? admin['nama'] ?? 'Tanpa Nama'),
-                                subtitle: Text(admin['email'] ?? ''),
-                              );
-                            },
-                          );
-                        }
-                      },
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 20),
-
-                // Tombol Logout
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Tampilkan dialog konfirmasi logout
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text('Konfirmasi Logout'),
-                              content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Text('Batal'),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const LoginScreen(),
-                                      ),
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                  ),
-                                  child: const Text('Logout'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Logout', style: TextStyle(fontSize: 16)),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-              ],
-            ),
-          );
-        },
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -620,7 +529,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         onPressed: () {
                           // Fungsi ganti foto (placeholder)
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur ganti foto akan segera hadir')), 
+                            const SnackBar(content: Text('Fitur ganti foto akan segera hadir')),
                           );
                         },
                       ),

@@ -1,265 +1,208 @@
 import 'package:flutter/material.dart';
-import 'booking.dart';
+import 'package:intl/intl.dart';
+import 'services/api_service.dart';
+import 'riwayat_booking.dart';
 
-// Halaman Detail Paket Wisata
-class DetailPaketScreen extends StatelessWidget {
-  final Map paket;
-  final String? token;
+// Halaman Detail Paket Wisata (API)
+class DetailPaketScreen extends StatefulWidget {
+  final int packageId;
 
   const DetailPaketScreen({
     super.key,
-    required this.paket,
-    this.token,
+    required this.packageId,
   });
 
   @override
+  State<DetailPaketScreen> createState() => _DetailPaketScreenState();
+}
+
+class _DetailPaketScreenState extends State<DetailPaketScreen> {
+  final ApiService _apiService = ApiService();
+  late Future<Map> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _apiService.getPackageDetail(widget.packageId);
+  }
+
+  int _asInt(dynamic v) {
+    if (v is int) return v;
+    if (v is double) return v.round();
+    return int.tryParse(v?.toString() ?? '') ?? 0;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final rupiah = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Detail Paket'),
-        backgroundColor: Colors.blue[700],
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: () {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Bagikan paket')));
-            },
-          ),
-        ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Gambar paket
-                  Container(
-                    height: 280,
-                    width: double.infinity,
-                    child: paket['gambar'] != null
-                        ? Image.network(
-                            paket['gambar'],
-                            width: double.infinity,
-                            height: 280,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: Colors.green[300],
-                                child: const Center(
-                                  child: Icon(Icons.image, size: 80, color: Colors.white),
-                                ),
-                              );
-                            },
-                          )
-                        : Container(
-                            color: Colors.green[300],
-                            child: const Center(
-                              child: Icon(Icons.image, size: 80, color: Colors.white),
-                            ),
-                          ),
-                  ),
+      body: SafeArea(
+        child: FutureBuilder<Map>(
+          future: _future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-                  // Info Paket
-                  Padding(
-                    padding: const EdgeInsets.all(20),
+            if (snapshot.hasError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const SizedBox(height: 12),
+                    Text('Error: ${snapshot.error}', textAlign: TextAlign.center),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () => setState(() => _future = _apiService.getPackageDetail(widget.packageId)),
+                      child: const Text('Coba Lagi'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            final paket = snapshot.data ?? {};
+            final name = (paket['name'] ?? paket['nama'] ?? '-').toString();
+            final location = (paket['location'] ?? paket['lokasi'] ?? '').toString();
+            final description = (paket['description'] ?? paket['deskripsi'] ?? '').toString();
+            final imageUrl = (paket['image'] ?? paket['image_url'] ?? paket['gambar'] ?? paket['photo'] ?? paket['thumbnail'] ?? '').toString();
+            final price = _asInt(paket['price'] ?? paket['harga'] ?? paket['amount'] ?? 0);
+
+            return Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Nama dan Rating
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                paket['nama'] ?? '-',
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
+                        SizedBox(
+                          height: 260,
+                          width: double.infinity,
+                          child: imageUrl.isNotEmpty
+                              ? Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey[300],
+                                      child: const Center(child: Icon(Icons.broken_image, size: 64, color: Colors.grey)),
+                                    );
+                                  },
+                                )
+                              : Container(
+                                  color: Colors.grey[300],
+                                  child: const Center(child: Icon(Icons.image, size: 64, color: Colors.grey)),
                                 ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name,
+                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                               ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.amber,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.star,
-                                    size: 18,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    paket['rating']?.toString() ?? '-',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
+                              if (location.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Icon(Icons.location_on, size: 18, color: Colors.grey[700]),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(location, style: TextStyle(color: Colors.grey[700])),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
+                              ],
+                              const SizedBox(height: 16),
+                              Text(
+                                rupiah.format(price),
+                                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Durasi
-                        Row(
-                          children: [
-                            Icon(Icons.access_time, color: Colors.blue[700]),
-                            const SizedBox(width: 8),
-                            Text(
-                              paket['durasi'] ?? '-',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[700],
+                              const SizedBox(height: 20),
+                              const Text('Deskripsi Paket', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 8),
+                              Text(
+                                description.isNotEmpty ? description : '-',
+                                style: TextStyle(fontSize: 15, color: Colors.grey[800], height: 1.5),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Harga
-                        Row(
-                          children: [
-                            Text(
-                              paket['harga'].toString(),
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue[700],
-                              ),
-                            ),
-                            Text(
-                              ' /paket',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Deskripsi
-                        const Text(
-                          'Deskripsi Paket',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          paket['deskripsi'] ?? '-',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[700],
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Include dalam paket (dummy)
-                        const Text(
-                          'Termasuk Dalam Paket',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        IncludeItem(icon: Icons.hotel, text: 'Akomodasi Hotel'),
-                        IncludeItem(
-                          icon: Icons.restaurant,
-                          text: 'Makan 3x Sehari',
-                        ),
-                        IncludeItem(
-                          icon: Icons.directions_car,
-                          text: 'Transportasi',
-                        ),
-                        IncludeItem(icon: Icons.person, text: 'Tour Guide'),
-                        IncludeItem(
-                          icon: Icons.confirmation_number,
-                          text: 'Tiket Masuk',
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Itinerary (dummy)
-                        const Text(
-                          'Itinerary',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ItineraryItem(
-                          hari: 'Hari 1',
-                          kegiatan: 'Tiba di lokasi, check-in hotel, city tour',
-                        ),
-                        ItineraryItem(
-                          hari: 'Hari 2',
-                          kegiatan: 'Explore destinasi utama, foto session',
-                        ),
-                        ItineraryItem(
-                          hari: 'Hari 3',
-                          kegiatan: 'Belanja oleh-oleh, check-out, pulang',
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      // Tombol Booking
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
-        child: SizedBox(
-          height: 50,
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BookingScreen(paket: paket, token: token),
                 ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue[700],
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+              ],
+            );
+          },
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SizedBox(
+            height: 50,
+            child: ElevatedButton(
+              onPressed: () async {
+                final snapshot = await _future;
+                final paket = snapshot;
+                final price = _asInt(paket['price'] ?? paket['harga'] ?? paket['amount'] ?? 0);
+                final name = (paket['name'] ?? paket['nama'] ?? '-').toString();
+
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Konfirmasi Booking'),
+                    content: Text('Booking paket $name?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+                      ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Ya')),
+                    ],
+                  ),
+                );
+
+                if (confirm != true) return;
+
+                try {
+                  await _apiService.createPayment({
+                    'package_id': widget.packageId,
+                    'amount': price,
+                    'payment_method': 'transfer',
+                  });
+
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Booking berhasil, cek riwayat pembayaran.')),
+                  );
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RiwayatBookingScreen()),
+                  );
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Gagal booking: $e')),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
+              child: const Text('Book Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
-            child: const Text('Booking Paket', style: TextStyle(fontSize: 18)),
           ),
         ),
       ),
@@ -306,7 +249,7 @@ class ItineraryItem extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.blue[700],
+              color: Theme.of(context).primaryColor,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'home.dart';
+
+import 'services/api_service.dart';
 
 // Halaman Register/Daftar
 class RegisterScreen extends StatefulWidget {
@@ -20,8 +21,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool sembunyikanPassword = true;
   bool sembunyikanKonfirmasiPassword = true;
 
+  bool _isLoading = false;
+  final ApiService _apiService = ApiService();
+
+  @override
+  void dispose() {
+    namaController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    konfirmasiPasswordController.dispose();
+    super.dispose();
+  }
+
   // Fungsi untuk register
-  void register() {
+  Future<void> register() async {
+    if (_isLoading) return;
     String nama = namaController.text;
     String email = emailController.text;
     String password = passwordController.text;
@@ -37,217 +51,214 @@ class _RegisterScreenState extends State<RegisterScreen> {
         context,
       ).showSnackBar(const SnackBar(content: Text('Password tidak sama!')));
     } else {
-      // Jika berhasil, langsung ke HomeScreen dengan nama
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen(namaUser: nama)),
-      );
+      setState(() => _isLoading = true);
+      try {
+        await _apiService.register({
+          'name': nama,
+          'email': email,
+          'password': password,
+          'password_confirmation': konfirmasi,
+        });
+
+        if (!mounted) return;
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Berhasil'),
+            content: const Text('Registrasi berhasil! Silakan login.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        if (!mounted) return;
+        Navigator.pop(context);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF667EEA), // Biru
-              Color(0xFF764BA2), // Ungu
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
+      backgroundColor: Colors.blue[50],
+      appBar: AppBar(
+        title: const Text('Daftar Akun'),
+        backgroundColor: Theme.of(context).primaryColor,
+        foregroundColor: Colors.white,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+
+              // Icon
+              Icon(Icons.person_add, size: 80, color: Colors.blue[700]),
+              const SizedBox(height: 20),
+
+              Text(
+                'Buat Akun Baru',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              const SizedBox(height: 30),
+
+              // Input Nama Lengkap
+              TextField(
+                controller: namaController,
+                decoration: InputDecoration(
+                  labelText: 'Nama Lengkap',
+                  hintText: 'Masukkan nama lengkap Anda',
+                  prefixIcon: const Icon(Icons.person),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Input Email
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  hintText: 'Masukkan email Anda',
+                  prefixIcon: const Icon(Icons.email),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 16),
+
+              // Input Password
+              TextField(
+                controller: passwordController,
+                obscureText: sembunyikanPassword,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  hintText: 'Buat password',
+                  prefixIcon: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      sembunyikanPassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        sembunyikanPassword = !sembunyikanPassword;
+                      });
+                    },
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Input Konfirmasi Password
+              TextField(
+                controller: konfirmasiPasswordController,
+                obscureText: sembunyikanKonfirmasiPassword,
+                decoration: InputDecoration(
+                  labelText: 'Konfirmasi Password',
+                  hintText: 'Ulangi password',
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      sembunyikanKonfirmasiPassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        sembunyikanKonfirmasiPassword =
+                            !sembunyikanKonfirmasiPassword;
+                      });
+                    },
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Tombol Daftar
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : register,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Daftar', style: TextStyle(fontSize: 18)),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Link ke Login
+              Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo dan judul
-                  _buildRegisterLogo(),
-                  const SizedBox(height: 40),
-                  const Text(
-                    'Buat Akun Baru',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  Text(
+                    'Sudah punya akun? ',
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
-                  const SizedBox(height: 40),
-                  // Card input
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        TextField(
-                          controller: namaController,
-                          decoration: const InputDecoration(
-                            labelText: 'Nama Lengkap',
-                            prefixIcon: Icon(Icons.person, color: Color(0xFF667EEA)),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                          ),
-                        ),
-                        Divider(height: 1),
-                        TextField(
-                          controller: emailController,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            prefixIcon: Icon(Icons.email, color: Color(0xFF667EEA)),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        Divider(height: 1),
-                        TextField(
-                          controller: passwordController,
-                          obscureText: sembunyikanPassword,
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: const Icon(Icons.lock, color: Color(0xFF667EEA)),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                sembunyikanPassword ? Icons.visibility_off : Icons.visibility,
-                                color: Color(0xFF667EEA),
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  sembunyikanPassword = !sembunyikanPassword;
-                                });
-                              },
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                          ),
-                        ),
-                        Divider(height: 1),
-                        TextField(
-                          controller: konfirmasiPasswordController,
-                          obscureText: sembunyikanKonfirmasiPassword,
-                          decoration: InputDecoration(
-                            labelText: 'Konfirmasi Password',
-                            prefixIcon: const Icon(Icons.lock, color: Color(0xFF667EEA)),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                sembunyikanKonfirmasiPassword ? Icons.visibility_off : Icons.visibility,
-                                color: Color(0xFF667EEA),
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  sembunyikanKonfirmasiPassword = !sembunyikanKonfirmasiPassword;
-                                });
-                              },
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: register,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 5,
-                      ),
-                      child: const Text(
-                        'Daftar',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF667EEA),
-                        ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      'Login',
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Sudah punya akun? ',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'Login',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
-
-  Widget _buildRegisterLogo() {
-    return SizedBox(
-      width: 120,
-      height: 120,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Globe
-          CustomPaint(
-            size: const Size(100, 100),
-            painter: GlobePainter(),
-          ),
-          // Person icon on top
-          const Positioned(
-            top: 10,
-            right: 10,
-            child: Icon(Icons.person_add, size: 32, color: Color(0xFF667EEA)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Tambahkan GlobePainter jika belum ada
-class GlobePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF48CAE4)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), size.width / 2, paint);
-  }
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
