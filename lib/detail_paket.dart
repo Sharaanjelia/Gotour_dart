@@ -217,6 +217,7 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                         jumlahOrang: 1,
                         totalHarga: price,
                         paymentId: paymentId,
+                          tanggalLabel: DateFormat('dd MMM yyyy').format(DateTime.now()),
                       ),
                     ),
                   );

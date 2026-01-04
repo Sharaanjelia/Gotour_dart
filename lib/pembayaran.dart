@@ -8,6 +8,10 @@ class PembayaranScreen extends StatefulWidget {
   final int jumlahOrang;
   final int totalHarga;
   final int? paymentId;
+  final String? tanggalLabel;
+  final String? bookingCode;
+  final String? imageUrl;
+  final int? jumlahHari;
 
   const PembayaranScreen({
     super.key,
@@ -15,6 +19,10 @@ class PembayaranScreen extends StatefulWidget {
     required this.jumlahOrang,
     required this.totalHarga,
     this.paymentId,
+    this.tanggalLabel,
+    this.bookingCode,
+    this.imageUrl,
+    this.jumlahHari,
   });
 
   @override
@@ -28,16 +36,70 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
   final ApiService _apiService = ApiService();
 
   String _toApiPaymentMethod(String uiValue) {
-    // Backend biasanya hanya menerima enum sederhana seperti: transfer
-    // Sementara UI menampilkan label seperti: "Transfer - Mandiri".
-    // Agar tidak gagal validasi, kita normalisasi ke nilai yang aman.
-    final v = uiValue.trim().toLowerCase();
-    if (v.isEmpty) return 'transfer';
-    if (v.startsWith('transfer')) return 'transfer';
+    // Backend kamu memvalidasi `payment_method` dengan nilai tertentu (enum/slug).
+    // UI menampilkan label seperti: "Transfer - Mandiri" / "E-Wallet - GoPay".
+    // Kita ambil provider (bagian setelah '-') sebagai slug: mandiri/gopay/dana/visa/dll.
+    final raw = uiValue.trim();
+    if (raw.isEmpty) return '';
 
-    // Jika backend kamu mendukung e-wallet/kartu kredit, kamu bisa sesuaikan di sini.
-    // Untuk saat ini fallback ke 'transfer' agar tidak invalid.
-    return 'transfer';
+    final parts = raw.split('-').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    final provider = (parts.length >= 2 ? parts.last : parts.first).toLowerCase();
+
+    // Normalisasi beberapa nama umum.
+    if (provider.contains('go pay') || provider == 'go-pay') return 'gopay';
+    if (provider.contains('gojek')) return 'gopay';
+    if (provider.contains('ovo')) return 'ovo';
+    if (provider.contains('dana')) return 'dana';
+    if (provider.contains('mandiri')) return 'mandiri';
+    if (provider.contains('bca')) return 'bca';
+    if (provider.contains('bni')) return 'bni';
+    if (provider.contains('visa')) return 'visa';
+    if (provider.contains('mastercard')) return 'mastercard';
+    if (provider.contains('jcb')) return 'jcb';
+
+    // Fallback: slugify sederhana (hapus spasi)
+    return provider.replaceAll(' ', '');
+  }
+
+  String _toApiCategoryMethod(String uiValue) {
+    final raw = uiValue.trim();
+    if (raw.isEmpty) return '';
+    final parts = raw.split('-').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    final category = (parts.isNotEmpty ? parts.first : raw).toLowerCase();
+
+    if (category.startsWith('transfer')) {
+      // Nilai yang sering dipakai di backend: transfer / bank_transfer
+      return 'bank_transfer';
+    }
+    if (category.startsWith('e-wallet') || category.startsWith('ewallet')) {
+      return 'ewallet';
+    }
+    if (category.startsWith('kartu kredit') || category.startsWith('credit')) {
+      return 'credit_card';
+    }
+    return '';
+  }
+
+  List<String> _paymentMethodCandidates(String uiValue) {
+    final provider = _toApiPaymentMethod(uiValue);
+    final category = _toApiCategoryMethod(uiValue);
+    final candidates = <String>[
+      provider,
+      category,
+      // alias umum
+      if (category == 'bank_transfer') 'transfer',
+      if (category == 'ewallet') 'e_wallet',
+    ];
+
+    // Uniq + non-empty
+    final out = <String>[];
+    for (final c in candidates) {
+      final v = c.trim();
+      if (v.isEmpty) continue;
+      if (out.contains(v)) continue;
+      out.add(v);
+    }
+    return out;
   }
 
   // Kategori metode pembayaran
@@ -95,11 +157,23 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
       );
 
       try {
-        final apiMethod = _toApiPaymentMethod(metodePembayaran);
-        await _apiService.payPayment(
-          widget.paymentId!,
-          paymentMethod: apiMethod,
-        );
+        final candidates = _paymentMethodCandidates(metodePembayaran);
+
+        Exception? lastError;
+        for (final method in candidates) {
+          try {
+            await _apiService.payPayment(
+              widget.paymentId!,
+              paymentMethod: method,
+            );
+            lastError = null;
+            break;
+          } catch (e) {
+            lastError = e is Exception ? e : Exception(e.toString());
+          }
+        }
+
+        if (lastError != null) throw lastError;
       } catch (e) {
         if (mounted) Navigator.pop(context); // tutup loading
         ScaffoldMessenger.of(context).showSnackBar(
@@ -119,6 +193,12 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
           namaTempat: widget.namaTempat,
           metodePembayaran: metodePembayaran,
           totalHarga: widget.totalHarga,
+          tanggalLabel: widget.tanggalLabel,
+          jumlahOrang: widget.jumlahOrang,
+          paymentId: widget.paymentId,
+          bookingCode: widget.bookingCode,
+          imageUrl: widget.imageUrl,
+          jumlahHari: widget.jumlahHari,
         ),
       ),
     );
