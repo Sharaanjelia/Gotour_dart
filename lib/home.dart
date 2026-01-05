@@ -1134,7 +1134,11 @@ class BookingPlaceholder extends StatelessWidget {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => const ItineraryScreen(),
+                                          builder: (context) => ItineraryScreen(
+                                            namaPaket: booking['namaTempat']?.toString(),
+                                            tanggalLabel: booking['tanggal']?.toString(),
+                                            jumlahHari: null,
+                                          ),
                                         ),
                                       );
                                     },
@@ -1159,6 +1163,9 @@ class BookingPlaceholder extends StatelessWidget {
                                           builder: (context) => ETiketScreen(
                                             namaTempat: booking['namaTempat'],
                                             totalHarga: booking['totalHarga'],
+                                            tanggalLabel: booking['tanggal']?.toString(),
+                                            jumlahOrang: int.tryParse((booking['jumlahOrang'] ?? 1).toString()),
+                                            bookingCode: booking['kodeBooking']?.toString(),
                                           ),
                                         ),
                                       );

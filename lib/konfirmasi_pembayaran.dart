@@ -8,12 +8,24 @@ class KonfirmasiPembayaranScreen extends StatelessWidget {
   final String namaTempat;
   final String metodePembayaran;
   final int totalHarga;
+  final String? tanggalLabel;
+  final int? jumlahOrang;
+  final int? paymentId;
+  final String? bookingCode;
+  final String? imageUrl;
+  final int? jumlahHari;
 
   const KonfirmasiPembayaranScreen({
     super.key,
     required this.namaTempat,
     required this.metodePembayaran,
     required this.totalHarga,
+    this.tanggalLabel,
+    this.jumlahOrang,
+    this.paymentId,
+    this.bookingCode,
+    this.imageUrl,
+    this.jumlahHari,
   });
 
   // Fungsi untuk format rupiah
@@ -39,12 +51,16 @@ class KonfirmasiPembayaranScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                 // Icon Success
                 Container(
                   width: 120,
@@ -122,6 +138,10 @@ class KonfirmasiPembayaranScreen extends StatelessWidget {
                           builder: (context) => ETiketScreen(
                             namaTempat: namaTempat,
                             totalHarga: totalHarga,
+                            tanggalLabel: tanggalLabel,
+                            jumlahOrang: jumlahOrang,
+                            paymentId: paymentId,
+                            bookingCode: bookingCode,
                           ),
                         ),
                       );
@@ -151,7 +171,12 @@ class KonfirmasiPembayaranScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const ItineraryScreen(),
+                          builder: (context) => ItineraryScreen(
+                            namaPaket: namaTempat,
+                            tanggalLabel: tanggalLabel,
+                            jumlahHari: jumlahHari,
+                            imageUrl: imageUrl,
+                          ),
                         ),
                       );
                     },
@@ -198,9 +223,12 @@ class KonfirmasiPembayaranScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

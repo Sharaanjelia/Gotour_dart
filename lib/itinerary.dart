@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
-import 'paket_wisata.dart';
 
 class ItineraryScreen extends StatefulWidget {
-  const ItineraryScreen({super.key});
+  final String? namaPaket;
+  final String? tanggalLabel;
+  final int? jumlahHari;
+  final String? imageUrl;
+
+  const ItineraryScreen({
+    super.key,
+    this.namaPaket,
+    this.tanggalLabel,
+    this.jumlahHari,
+    this.imageUrl,
+  });
 
   @override
   State<ItineraryScreen> createState() => _ItineraryScreenState();
@@ -10,6 +20,9 @@ class ItineraryScreen extends StatefulWidget {
 
 class _ItineraryScreenState extends State<ItineraryScreen> {
   int selectedDay = 1;
+
+  String get _namaPaket => (widget.namaPaket ?? '').trim().isNotEmpty ? widget.namaPaket!.trim() : '-';
+  String get _tanggal => (widget.tanggalLabel ?? '').trim().isNotEmpty ? widget.tanggalLabel!.trim() : '-';
 
   @override
   Widget build(BuildContext context) {
@@ -49,12 +62,12 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
                       Icon(Icons.calendar_today, color: Colors.white, size: 20),
                       SizedBox(width: 12),
                       Text(
-                        'Sabtu 1 Des 2025 Trip',
+                        '$_tanggal Trip',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -90,32 +103,34 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.asset(
-                            'assets/images/Barusen Hills Ciwidey.jpg',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(Icons.image, color: Colors.grey);
-                            },
-                          ),
+                          child: (widget.imageUrl ?? '').trim().isNotEmpty
+                              ? Image.network(
+                                  widget.imageUrl!.trim(),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(Icons.image, color: Colors.grey);
+                                  },
+                                )
+                              : const Icon(Icons.image, color: Colors.grey),
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Paket Kota A',
-                              style: TextStyle(
+                              _namaPaket,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
-                              '3 Hari 2 Malam',
-                              style: TextStyle(
+                              widget.jumlahHari != null ? '${widget.jumlahHari} Hari' : '-',
+                              style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
                               ),
@@ -254,15 +269,9 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
   }) {
     return InkWell(
       onTap: () {
-        if (day == 2) {
-          // Navigate to PaketWisataScreen when Day 2 is clicked
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const PaketWisataScreen(),
-            ),
-          );
-        }
+        setState(() {
+          selectedDay = day;
+        });
       },
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,14 +1,25 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'home.dart';
 
 class ETiketScreen extends StatelessWidget {
   final String namaTempat;
   final int totalHarga;
+  final String? namaPemesan;
+  final int? jumlahOrang;
+  final String? tanggalLabel;
+  final int? paymentId;
+  final String? bookingCode;
 
   const ETiketScreen({
     super.key,
     required this.namaTempat,
     required this.totalHarga,
+    this.namaPemesan,
+    this.jumlahOrang,
+    this.tanggalLabel,
+    this.paymentId,
+    this.bookingCode,
   });
 
   String formatRupiah(int angka) {
@@ -34,9 +45,21 @@ class ETiketScreen extends StatelessWidget {
     return List.generate(8, (index) => chars[random.nextInt(chars.length)]).join();
   }
 
+  String _bookingCode() {
+    final provided = (bookingCode ?? '').trim();
+    if (provided.isNotEmpty) return provided;
+    if (paymentId != null) {
+      return 'GT${paymentId.toString().padLeft(8, '0')}';
+    }
+    return generateBookingCode();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bookingCode = generateBookingCode();
+    final code = _bookingCode();
+    final pemesan = (namaPemesan ?? '').trim().isNotEmpty ? (namaPemesan ?? '').trim() : '-';
+    final orang = jumlahOrang ?? 1;
+    final tanggal = (tanggalLabel ?? '').trim().isNotEmpty ? tanggalLabel!.trim() : '-';
     
     return Scaffold(
       body: Container(
@@ -182,7 +205,7 @@ class ETiketScreen extends StatelessWidget {
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
-                                            bookingCode,
+                                            code,
                                             style: const TextStyle(
                                               fontSize: 32,
                                               fontWeight: FontWeight.bold,
@@ -198,7 +221,7 @@ class ETiketScreen extends StatelessWidget {
                                     _buildInfoSection(
                                       icon: Icons.person,
                                       label: 'Nama Pemesan',
-                                      value: 'shara Anjelia',
+                                      value: pemesan,
                                     ),
                                     const SizedBox(height: 16),
                                     _buildInfoSection(
@@ -213,7 +236,7 @@ class ETiketScreen extends StatelessWidget {
                                           child: _buildInfoSection(
                                             icon: Icons.calendar_today,
                                             label: 'Tanggal',
-                                            value: '15 Des 2025',
+                                            value: tanggal,
                                           ),
                                         ),
                                         const SizedBox(width: 16),
@@ -230,7 +253,7 @@ class ETiketScreen extends StatelessWidget {
                                     _buildInfoSection(
                                       icon: Icons.people,
                                       label: 'Jumlah Penumpang',
-                                      value: '2 Orang',
+                                      value: '$orang Orang',
                                     ),
                                     const SizedBox(height: 16),
                                     _buildInfoSection(
@@ -259,6 +282,32 @@ class ETiketScreen extends StatelessWidget {
                                               color: Colors.white,
                                             ),
                                           ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 20),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 50,
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pushAndRemoveUntil(
+                                            context,
+                                            MaterialPageRoute(builder: (_) => const HomeScreen()),
+                                            (route) => false,
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF667EEA),
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Kembali ke Beranda',
+                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                         ),
                                       ),
                                     ),

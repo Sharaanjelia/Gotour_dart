@@ -648,13 +648,12 @@ class ApiService {
   }
 
   // POST /payments/{paymentId}/pay (dengan auth)
-  // Beberapa backend mewajibkan `payment_method` di body.
+  // Beberapa backend mewajibkan `payment_method` di body dan nilainya bisa berbeda-beda.
   Future<Map> payPayment(int paymentId, {String? paymentMethod}) async {
     try {
       final method = (paymentMethod ?? '').trim();
       final body = <String, dynamic>{
-        // Default aman untuk menghindari validation error "payment method field is required".
-        'payment_method': method.isNotEmpty ? method : 'transfer',
+        if (method.isNotEmpty) 'payment_method': method,
       };
 
       final response = await http.post(

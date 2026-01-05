@@ -162,6 +162,14 @@ class _RiwayatBookingScreenState extends State<RiwayatBookingScreen> {
                     '-'
                   ).toString();
 
+                  final pkgIdRaw = p['package_id'] ?? package['id'] ?? package['package_id'];
+                  final packageId = int.tryParse(pkgIdRaw?.toString() ?? '');
+
+                  final qtyRaw = p['quantity'] ?? p['qty'] ?? p['jumlah_orang'] ?? p['jumlahOrang'];
+                  final jumlahOrang = int.tryParse(qtyRaw?.toString() ?? '') ?? 1;
+
+                  final kode = (p['booking_code'] ?? p['kode_booking'] ?? '').toString().trim();
+
                   final amountRaw = p['amount'] ?? p['total'] ?? p['total_amount'] ?? p['harga'] ?? 0;
                   final amount = int.tryParse(amountRaw.toString()) ?? 0;
 
@@ -244,7 +252,14 @@ class _RiwayatBookingScreenState extends State<RiwayatBookingScreen> {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (_) => ETiketScreen(namaTempat: packageName, totalHarga: amount),
+                                                builder: (_) => ETiketScreen(
+                                                  namaTempat: packageName,
+                                                  totalHarga: amount,
+                                                  tanggalLabel: dateFormat.format(date),
+                                                  jumlahOrang: jumlahOrang,
+                                                  paymentId: paymentId != 0 ? paymentId : null,
+                                                  bookingCode: kode.isNotEmpty ? kode : null,
+                                                ),
                                               ),
                                             );
                                           } else {
