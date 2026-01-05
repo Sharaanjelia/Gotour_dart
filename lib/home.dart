@@ -1367,11 +1367,41 @@ class PaketWisataCard extends StatelessWidget {
     this.onTap,
   });
 
+  String _resolveImagePath(String input) {
+    final raw = input.trim();
+    if (raw.isEmpty) return '';
+
+    final normalized = raw.replaceAll('\\', '/');
+    if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+      return normalized.contains('%') ? normalized.replaceAll(' ', '%20') : Uri.encodeFull(normalized);
+    }
+
+    // Asset lokal
+    if (normalized.startsWith('assets/')) return normalized;
+
+    // Jika backend mengirim path relatif (umum di Laravel storage), ubah jadi URL absolut.
+    final origin = ApiService.baseUrl.replaceFirst(RegExp(r'\/api\/?$'), '');
+    String absolute;
+    if (normalized.startsWith('/')) {
+      absolute = '$origin$normalized';
+    } else if (normalized.startsWith('storage/')) {
+      absolute = '$origin/$normalized';
+    } else if (normalized.startsWith('public/storage/')) {
+      absolute = '$origin/${normalized.replaceFirst('public/', '')}';
+    } else {
+      // fallback: anggap relative ke /storage
+      absolute = '$origin/storage/$normalized';
+    }
+
+    return absolute.contains('%') ? absolute.replaceAll(' ', '%20') : Uri.encodeFull(absolute);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final trimmedGambar = gambar.trim();
-    final isNetwork = trimmedGambar.startsWith('http://') || trimmedGambar.startsWith('https://');
-    final isEmptyPath = trimmedGambar.isEmpty;
+    final resolvedGambar = _resolveImagePath(gambar);
+    final isNetwork = resolvedGambar.startsWith('http://') || resolvedGambar.startsWith('https://');
+    final isAsset = resolvedGambar.startsWith('assets/');
+    final isEmptyPath = resolvedGambar.isEmpty;
 
     return GestureDetector(
       onTap: onTap,
@@ -1405,9 +1435,9 @@ class PaketWisataCard extends StatelessWidget {
                       color: Colors.grey[300],
                       child: const Icon(Icons.image, size: 50, color: Colors.grey),
                     )
-                  : isNetwork
+                    : isNetwork
                       ? Image.network(
-                          trimmedGambar,
+                        resolvedGambar,
                           width: 200,
                           height: 120,
                           fit: BoxFit.cover,
@@ -1421,7 +1451,7 @@ class PaketWisataCard extends StatelessWidget {
                           },
                         )
                       : Image.asset(
-                          trimmedGambar,
+                          isAsset ? resolvedGambar : '',
                           width: 200,
                           height: 120,
                           fit: BoxFit.cover,

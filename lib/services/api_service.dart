@@ -19,14 +19,41 @@ class ApiService {
     return baseUrl.replaceFirst(RegExp(r'\/api\/?$'), '');
   }
 
+  String _sanitizeUrl(String url) {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return '';
+
+    // Backend kadang mengembalikan path dengan backslash (Windows) atau filename mengandung spasi.
+    // `Image.network` butuh URL yang valid, jadi minimal amankan untuk web request.
+    final normalizedSlashes = trimmed.replaceAll('\\', '/');
+
+    // Hindari double-encoding untuk URL yang sudah percent-encoded.
+    if (normalizedSlashes.contains('%')) {
+      return normalizedSlashes.replaceAll(' ', '%20');
+    }
+    return Uri.encodeFull(normalizedSlashes);
+  }
+
   String _toAbsoluteUrl(String? maybeRelative) {
-    final raw = (maybeRelative ?? '').trim();
+    final raw = _sanitizeUrl((maybeRelative ?? '').trim());
     if (raw.isEmpty) return '';
+
+    // Sudah absolute
     if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-    if (raw.startsWith('/')) return '$_serverOrigin$raw';
-    // Kadang backend mengirim path seperti: packages/xxx.jpg (relative ke /storage)
-    if (raw.startsWith('storage/')) return '$_serverOrigin/$raw';
-    return '$_serverOrigin/storage/$raw';
+
+    // Absolute path dari root server
+    if (raw.startsWith('/')) return _sanitizeUrl('$_serverOrigin$raw');
+
+    // Kadang backend mengirim path seperti:
+    // - storage/xxx.jpg
+    // - public/storage/xxx.jpg
+    // - packages/xxx.jpg (relative ke /storage)
+    if (raw.startsWith('storage/')) return _sanitizeUrl('$_serverOrigin/$raw');
+    if (raw.startsWith('public/storage/')) {
+      return _sanitizeUrl('$_serverOrigin/${raw.replaceFirst('public/', '')}');
+    }
+
+    return _sanitizeUrl('$_serverOrigin/storage/$raw');
   }
 
   Map<String, dynamic> _normalizePackage(Map<String, dynamic> src) {
@@ -39,6 +66,15 @@ class ApiService {
     final coverUrl = out['cover_image_url']?.toString();
     final coverImage = out['cover_image']?.toString();
     final candidate = coverUrl?.isNotEmpty == true ? coverUrl : coverImage;
+
+    // Normalisasi field asli juga (biar aman kalau UI masih pakai key lama)
+    if ((coverUrl ?? '').trim().isNotEmpty) {
+      out['cover_image_url'] = _toAbsoluteUrl(coverUrl);
+    }
+    if ((coverImage ?? '').trim().isNotEmpty) {
+      out['cover_image'] = _toAbsoluteUrl(coverImage);
+    }
+
     if ((out['photo'] == null || out['photo'].toString().trim().isEmpty) && (candidate ?? '').trim().isNotEmpty) {
       out['photo'] = _toAbsoluteUrl(candidate);
     } else if (out['photo'] != null) {
@@ -50,6 +86,19 @@ class ApiService {
       out['image_url'] = out['photo'];
     } else if (out['image_url'] != null) {
       out['image_url'] = _toAbsoluteUrl(out['image_url']?.toString());
+    }
+
+    // Beberapa layar lama mungkin pakai key `image` / `thumbnail`
+    if ((out['image'] == null || out['image'].toString().trim().isEmpty) && (out['photo']?.toString().trim().isNotEmpty ?? false)) {
+      out['image'] = out['photo'];
+    } else if (out['image'] != null) {
+      out['image'] = _toAbsoluteUrl(out['image']?.toString());
+    }
+
+    if ((out['thumbnail'] == null || out['thumbnail'].toString().trim().isEmpty) && (out['photo']?.toString().trim().isNotEmpty ?? false)) {
+      out['thumbnail'] = out['photo'];
+    } else if (out['thumbnail'] != null) {
+      out['thumbnail'] = _toAbsoluteUrl(out['thumbnail']?.toString());
     }
 
     // Description fallback: beberapa list API hanya punya excerpt
