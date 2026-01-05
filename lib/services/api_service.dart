@@ -383,6 +383,28 @@ class ApiService {
     }
   }
 
+  // GET /photo-recommendations - Mengambil data rekomendasi gaya foto
+  Future<List> getRecommendations() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/photo-recommendations'),
+        headers: await getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = _decodeJsonObject(response.body);
+        final data = _unwrapData(decoded);
+        if (data is List) return data;
+        return const [];
+      } else {
+        final decoded = _decodeJsonObject(response.body);
+        throw Exception(_extractMessage(decoded, fallback: 'Gagal mengambil data rekomendasi'));
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
   // GET /discounts
   Future<List> getDiscounts() async {
     try {
