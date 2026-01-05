@@ -14,6 +14,12 @@ class TestimonialScreen extends StatefulWidget {
 class _TestimonialScreenState extends State<TestimonialScreen> {
   final ApiService _apiService = ApiService();
 
+  double _asDouble(dynamic v) {
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.tryParse(v?.toString() ?? '') ?? 0.0;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -146,6 +152,10 @@ class _TestimonialScreenState extends State<TestimonialScreen> {
       date = DateTime.now();
     }
 
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final cardWidth = (screenWidth * 0.82).clamp(240.0, 340.0);
+    final userPhoto = (testimonial['user_photo'] ?? '').toString().trim();
+
     return Card(
       margin: const EdgeInsets.only(right: 16),
       elevation: 3,
@@ -153,7 +163,7 @@ class _TestimonialScreenState extends State<TestimonialScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Container(
-        width: 300,
+        width: cardWidth,
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,10 +173,8 @@ class _TestimonialScreenState extends State<TestimonialScreen> {
               children: [
                 CircleAvatar(
                   radius: 25,
-                  backgroundImage: testimonial['user_photo'] != null
-                      ? NetworkImage(testimonial['user_photo'])
-                      : null,
-                  child: testimonial['user_photo'] == null
+                  backgroundImage: userPhoto.isNotEmpty ? NetworkImage(userPhoto) : null,
+                  child: userPhoto.isEmpty
                       ? Text(
                           (testimonial['user_name'] ?? 'U')[0].toUpperCase(),
                           style: const TextStyle(
@@ -206,7 +214,7 @@ class _TestimonialScreenState extends State<TestimonialScreen> {
 
             // Rating
             RatingBarIndicator(
-              rating: (testimonial['rating'] ?? 0).toDouble(),
+              rating: _asDouble(testimonial['rating'] ?? 0),
               itemBuilder: (context, _) => const Icon(
                 Icons.star,
                 color: Colors.amber,

@@ -244,6 +244,15 @@ class _PaketWisataScreenState extends State<PaketWisataScreen> {
       decimalDigits: 0,
     );
 
+    final photoUrl = (package['photo'] ??
+            package['cover_image_url'] ??
+            package['image_url'] ??
+            package['image'] ??
+            package['thumbnail'] ??
+            '')
+        .toString();
+    final hasPhoto = photoUrl.trim().isNotEmpty;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
@@ -267,33 +276,32 @@ class _PaketWisataScreenState extends State<PaketWisataScreen> {
             ClipRRect(
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(12)),
-              child: package['photo'] != null
-                  ? Image.network(
-                      package['photo'],
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 200,
-                          color: Colors.grey[300],
-                          child: const Icon(
-                            Icons.broken_image,
-                            size: 60,
-                            color: Colors.grey,
-                          ),
-                        );
-                      },
-                    )
-                  : Container(
-                      height: 200,
-                      color: Colors.grey[300],
-                      child: const Icon(
-                        Icons.image,
-                        size: 60,
-                        color: Colors.grey,
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: hasPhoto
+                    ? Image.network(
+                        photoUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[300],
+                            child: const Icon(
+                              Icons.broken_image,
+                              size: 60,
+                              color: Colors.grey,
+                            ),
+                          );
+                        },
+                      )
+                    : Container(
+                        color: Colors.grey[300],
+                        child: const Icon(
+                          Icons.image,
+                          size: 60,
+                          color: Colors.grey,
+                        ),
                       ),
-                    ),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(16),

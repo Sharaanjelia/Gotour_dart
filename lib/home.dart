@@ -318,12 +318,14 @@ class _BerandaPageState extends State<BerandaPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         itemCount: items.length,
                         itemBuilder: (context, index) {
+                          final screenWidth = MediaQuery.sizeOf(context).width;
+                          final cardWidth = (screenWidth * 0.78).clamp(220.0, 320.0);
                           final d = items[index] is Map ? items[index] as Map : <dynamic, dynamic>{};
                           final title = (d['title'] ?? d['judul'] ?? d['name'] ?? d['nama'] ?? 'Promo').toString();
                           final code = (d['code'] ?? d['kode'] ?? d['coupon'] ?? '').toString();
                           final percent = (d['percentage'] ?? d['percent'] ?? d['diskon'] ?? '').toString();
                           return Container(
-                            width: 260,
+                            width: cardWidth,
                             margin: const EdgeInsets.only(right: 12),
                             child: Card(
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -485,13 +487,15 @@ class _BerandaPageState extends State<BerandaPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         itemCount: items.length,
                         itemBuilder: (context, index) {
+                          final screenWidth = MediaQuery.sizeOf(context).width;
+                          final cardWidth = (screenWidth * 0.78).clamp(220.0, 320.0);
                           final t = items[index] is Map ? items[index] as Map : <dynamic, dynamic>{};
                           final userName = (t['user_name'] ?? t['name'] ?? 'User').toString();
                           final review = (t['review'] ?? t['message'] ?? t['komentar'] ?? '').toString();
                           final rating = _asDouble(t['rating'] ?? 0);
 
                           return Container(
-                            width: 260,
+                            width: cardWidth,
                             margin: const EdgeInsets.only(right: 12),
                             child: Card(
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -1398,6 +1402,9 @@ class PaketWisataCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final cardWidth = (screenWidth * 0.55).clamp(160.0, 220.0);
+
     final resolvedGambar = _resolveImagePath(gambar);
     final isNetwork = resolvedGambar.startsWith('http://') || resolvedGambar.startsWith('https://');
     final isAsset = resolvedGambar.startsWith('assets/');
@@ -1406,7 +1413,7 @@ class PaketWisataCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 200,
+        width: cardWidth,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -1430,7 +1437,7 @@ class PaketWisataCard extends StatelessWidget {
               ),
               child: isEmptyPath
                   ? Container(
-                      width: 200,
+                      width: cardWidth,
                       height: 120,
                       color: Colors.grey[300],
                       child: const Icon(Icons.image, size: 50, color: Colors.grey),
@@ -1438,12 +1445,12 @@ class PaketWisataCard extends StatelessWidget {
                     : isNetwork
                       ? Image.network(
                         resolvedGambar,
-                          width: 200,
+                          width: cardWidth,
                           height: 120,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
-                              width: 200,
+                              width: cardWidth,
                               height: 120,
                               color: Colors.grey[300],
                               child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
@@ -1452,12 +1459,12 @@ class PaketWisataCard extends StatelessWidget {
                         )
                       : Image.asset(
                           isAsset ? resolvedGambar : '',
-                          width: 200,
+                          width: cardWidth,
                           height: 120,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
-                              width: 200,
+                              width: cardWidth,
                               height: 120,
                               color: Colors.grey[300],
                               child: const Icon(Icons.image, size: 50, color: Colors.grey),

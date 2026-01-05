@@ -42,7 +42,10 @@ class ETiketScreen extends StatelessWidget {
   String generateBookingCode() {
     final random = Random();
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    return List.generate(8, (index) => chars[random.nextInt(chars.length)]).join();
+    return List.generate(
+      8,
+      (index) => chars[random.nextInt(chars.length)],
+    ).join();
   }
 
   String _bookingCode() {
@@ -57,10 +60,14 @@ class ETiketScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final code = _bookingCode();
-    final pemesan = (namaPemesan ?? '').trim().isNotEmpty ? (namaPemesan ?? '').trim() : '-';
+    final pemesan = (namaPemesan ?? '').trim().isNotEmpty
+        ? (namaPemesan ?? '').trim()
+        : '-';
     final orang = jumlahOrang ?? 1;
-    final tanggal = (tanggalLabel ?? '').trim().isNotEmpty ? tanggalLabel!.trim() : '-';
-    
+    final tanggal = (tanggalLabel ?? '').trim().isNotEmpty
+        ? tanggalLabel!.trim()
+        : '-';
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -125,7 +132,10 @@ class ETiketScreen extends StatelessWidget {
                                   gradient: const LinearGradient(
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
-                                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                    colors: [
+                                      Color(0xFF667EEA),
+                                      Color(0xFF764BA2),
+                                    ],
                                   ),
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(24),
@@ -188,7 +198,9 @@ class ETiketScreen extends StatelessWidget {
                                         color: const Color(0xFFF5F7FA),
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(
-                                          color: const Color(0xFF667EEA).withOpacity(0.3),
+                                          color: const Color(
+                                            0xFF667EEA,
+                                          ).withOpacity(0.3),
                                           width: 2,
                                         ),
                                       ),
@@ -204,13 +216,17 @@ class ETiketScreen extends StatelessWidget {
                                             ),
                                           ),
                                           const SizedBox(height: 8),
-                                          Text(
-                                            code,
-                                            style: const TextStyle(
-                                              fontSize: 32,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF667EEA),
-                                              letterSpacing: 4,
+                                          FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              code,
+                                              maxLines: 1,
+                                              style: const TextStyle(
+                                                fontSize: 32,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF667EEA),
+                                                letterSpacing: 4,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -272,13 +288,17 @@ class ETiketScreen extends StatelessWidget {
                                       ),
                                       child: Center(
                                         child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: List.generate(
                                             20,
                                             (index) => Container(
                                               width: 3,
                                               height: index.isEven ? 40 : 30,
-                                              margin: const EdgeInsets.symmetric(horizontal: 2),
+                                              margin:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 2,
+                                                  ),
                                               color: Colors.white,
                                             ),
                                           ),
@@ -294,20 +314,30 @@ class ETiketScreen extends StatelessWidget {
                                         onPressed: () {
                                           Navigator.pushAndRemoveUntil(
                                             context,
-                                            MaterialPageRoute(builder: (_) => const HomeScreen()),
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const HomeScreen(),
+                                            ),
                                             (route) => false,
                                           );
                                         },
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF667EEA),
+                                          backgroundColor: const Color(
+                                            0xFF667EEA,
+                                          ),
                                           foregroundColor: Colors.white,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                           ),
                                         ),
                                         child: const Text(
                                           'Kembali ke Beranda',
-                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -344,8 +374,13 @@ class ETiketScreen extends StatelessWidget {
                                 label: const Text('Download'),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: Colors.white,
-                                  side: const BorderSide(color: Colors.white, width: 2),
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  side: const BorderSide(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -369,7 +404,9 @@ class ETiketScreen extends StatelessWidget {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
                                   foregroundColor: const Color(0xFF667EEA),
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -428,10 +465,14 @@ class ETiketScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isHighlight ? const Color(0xFF667EEA).withOpacity(0.1) : const Color(0xFFF5F7FA),
+        color: isHighlight
+            ? const Color(0xFF667EEA).withOpacity(0.1)
+            : const Color(0xFFF5F7FA),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isHighlight ? const Color(0xFF667EEA).withOpacity(0.3) : Colors.transparent,
+          color: isHighlight
+              ? const Color(0xFF667EEA).withOpacity(0.3)
+              : Colors.transparent,
           width: 1,
         ),
       ),
@@ -456,14 +497,13 @@ class ETiketScreen extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: isHighlight ? 18 : 14,
                     fontWeight: FontWeight.bold,

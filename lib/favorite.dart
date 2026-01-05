@@ -52,7 +52,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
   int _extractFavoriteId(Map<String, dynamic> raw) {
     // Jika response berbentuk wrapper { id: favoriteId, package: {...} }
-    if (raw['package'] is Map || raw['paket'] is Map || raw['tour_package'] is Map) {
+    if (raw['package'] is Map ||
+        raw['paket'] is Map ||
+        raw['tour_package'] is Map) {
       return _asInt(raw['id']);
     }
     // Jika backend mengirim favorite_id
@@ -60,7 +62,10 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     return 0;
   }
 
-  int _extractPackageId(Map<String, dynamic> raw, Map<String, dynamic> package) {
+  int _extractPackageId(
+    Map<String, dynamic> raw,
+    Map<String, dynamic> package,
+  ) {
     return _asInt(
       package['id'] ??
           raw['package_id'] ??
@@ -87,25 +92,30 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             }
 
             if (snapshot.hasError) {
+              // Jangan bikin halaman Favorit "crash" hanya karena backend belum ada endpoint list
+              // atau request web ter-block (CORS). Tampilkan empty-state.
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 60, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Error: ${snapshot.error}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.red),
+                    Icon(
+                      Icons.favorite_border,
+                      size: 80,
+                      color: Colors.grey[400],
                     ),
                     const SizedBox(height: 16),
-                    ElevatedButton(
+                    Text(
+                      'Belum ada paket favorit',
+                      style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
                       onPressed: () {
                         setState(() {
                           _favoritesFuture = _apiService.getFavorites();
                         });
                       },
-                      child: const Text('Retry'),
+                      child: const Text('Refresh'),
                     ),
                   ],
                 ),
@@ -118,7 +128,11 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.favorite_border, size: 80, color: Colors.grey[400]),
+                    Icon(
+                      Icons.favorite_border,
+                      size: 80,
+                      color: Colors.grey[400],
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Belum ada paket favorit',
@@ -168,22 +182,42 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       decimalDigits: 0,
     );
 
-    final name = (package['name'] ?? package['nama'] ?? raw['name'] ?? raw['nama'] ?? 'Paket').toString();
-    final location = (package['location'] ?? package['lokasi'] ?? raw['location'] ?? raw['lokasi'] ?? 'Lokasi tidak tersedia').toString();
-    final priceValue = package['price'] ?? package['harga'] ?? raw['price'] ?? raw['harga'] ?? 0;
+    final name =
+        (package['name'] ??
+                package['nama'] ??
+                raw['name'] ??
+                raw['nama'] ??
+                'Paket')
+            .toString();
+    final location =
+        (package['location'] ??
+                package['lokasi'] ??
+                raw['location'] ??
+                raw['lokasi'] ??
+                'Lokasi tidak tersedia')
+            .toString();
+    final priceValue =
+        package['price'] ??
+        package['harga'] ??
+        raw['price'] ??
+        raw['harga'] ??
+        0;
     final price = currencyFormat.format(_asInt(priceValue));
 
-    final photo = (package['photo'] ??
-            package['image'] ??
-            package['image_url'] ??
-            package['thumbnail'] ??
-            raw['photo'] ??
-            raw['image'] ??
-            raw['image_url'] ??
-            raw['thumbnail'])
-        ?.toString();
+    final photo =
+        (package['photo'] ??
+                package['image'] ??
+                package['image_url'] ??
+                package['thumbnail'] ??
+                raw['photo'] ??
+                raw['image'] ??
+                raw['image_url'] ??
+                raw['thumbnail'])
+            ?.toString();
 
-    final isNetwork = (photo ?? '').startsWith('http://') || (photo ?? '').startsWith('https://');
+    final isNetwork =
+        (photo ?? '').startsWith('http://') ||
+        (photo ?? '').startsWith('https://');
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -196,7 +230,8 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DetailPaketScreen(packageId: packageId),
+                    builder: (context) =>
+                        DetailPaketScreen(packageId: packageId),
                   ),
                 );
               }
@@ -205,39 +240,53 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
               child: (photo != null && photo.trim().isNotEmpty)
                   ? (isNetwork
-                      ? Image.network(
-                          photo,
-                          height: 180,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              height: 180,
-                              color: Colors.grey[300],
-                              child: const Icon(Icons.broken_image, size: 60, color: Colors.grey),
-                            );
-                          },
-                        )
-                      : Image.asset(
-                          photo,
-                          height: 180,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              height: 180,
-                              color: Colors.grey[300],
-                              child: const Icon(Icons.image, size: 60, color: Colors.grey),
-                            );
-                          },
-                        ))
+                        ? Image.network(
+                            photo,
+                            height: 180,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 180,
+                                color: Colors.grey[300],
+                                child: const Icon(
+                                  Icons.broken_image,
+                                  size: 60,
+                                  color: Colors.grey,
+                                ),
+                              );
+                            },
+                          )
+                        : Image.asset(
+                            photo,
+                            height: 180,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 180,
+                                color: Colors.grey[300],
+                                child: const Icon(
+                                  Icons.image,
+                                  size: 60,
+                                  color: Colors.grey,
+                                ),
+                              );
+                            },
+                          ))
                   : Container(
                       height: 180,
                       color: Colors.grey[300],
-                      child: const Icon(Icons.image, size: 60, color: Colors.grey),
+                      child: const Icon(
+                        Icons.image,
+                        size: 60,
+                        color: Colors.grey,
+                      ),
                     ),
             ),
             Padding(
@@ -250,28 +299,45 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                       Expanded(
                         child: Text(
                           name,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (favoriteId > 0)
+                      if (favoriteId > 0 || packageId > 0)
                         IconButton(
                           tooltip: 'Hapus dari favorit',
-                          onPressed: () => _confirmDeleteFavorite(context, favoriteId),
-                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                          onPressed: () => _confirmDeleteFavorite(
+                            context,
+                            favoriteId: favoriteId,
+                            packageId: packageId,
+                          ),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.red,
+                          ),
                         ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.location_on, size: 16, color: Theme.of(context).primaryColor),
+                      Icon(
+                        Icons.location_on,
+                        size: 16,
+                        color: Theme.of(context).primaryColor,
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           location,
-                          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -281,7 +347,11 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                   const SizedBox(height: 8),
                   Text(
                     price,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
                 ],
               ),
@@ -292,12 +362,19 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     );
   }
 
-  Future<void> _confirmDeleteFavorite(BuildContext context, int favoriteId) async {
-    final confirmed = await showDialog<bool>(
+  Future<void> _confirmDeleteFavorite(
+    BuildContext context, {
+    required int favoriteId,
+    required int packageId,
+  }) async {
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text('Hapus Favorit'),
-            content: const Text('Yakin ingin menghapus paket ini dari favorit?'),
+            content: const Text(
+              'Yakin ingin menghapus paket ini dari favorit?',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
@@ -315,7 +392,13 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     if (!confirmed) return;
 
     try {
-      final ok = await _apiService.deleteFavorite(favoriteId);
+      bool ok = false;
+      if (favoriteId > 0) {
+        ok = await _apiService.deleteFavorite(favoriteId);
+      } else if (packageId > 0) {
+        await _apiService.removeLocalFavoriteByPackageId(packageId);
+        ok = true;
+      }
       if (!mounted) return;
       if (ok) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -325,9 +408,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menghapus favorit: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal menghapus favorit: $e')));
     }
   }
 }

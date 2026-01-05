@@ -16,6 +16,30 @@ class _BlogWisataScreenState extends State<BlogWisataScreen> {
   late Future<List> _future;
   List _cache = const [];
 
+  String _resolveMediaUrl(String input) {
+    final raw = input.trim();
+    if (raw.isEmpty) return '';
+
+    final normalized = raw.replaceAll('\\', '/');
+    if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+      return normalized.contains('%') ? normalized.replaceAll(' ', '%20') : Uri.encodeFull(normalized);
+    }
+
+    final origin = ApiService.baseUrl.replaceFirst(RegExp(r'\/api\/?$'), '');
+    String absolute;
+    if (normalized.startsWith('/')) {
+      absolute = '$origin$normalized';
+    } else if (normalized.startsWith('storage/')) {
+      absolute = '$origin/$normalized';
+    } else if (normalized.startsWith('public/storage/')) {
+      absolute = '$origin/${normalized.replaceFirst('public/', '')}';
+    } else {
+      absolute = '$origin/storage/$normalized';
+    }
+
+    return absolute.contains('%') ? absolute.replaceAll(' ', '%20') : Uri.encodeFull(absolute);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -119,7 +143,8 @@ class _BlogWisataScreenState extends State<BlogWisataScreen> {
                   final blogId = int.tryParse(id.toString()) ?? 0;
                   final title = (blog['title'] ?? blog['judul'] ?? '-').toString();
                   final excerpt = (blog['excerpt'] ?? blog['ringkasan'] ?? blog['content'] ?? '').toString();
-                  final thumb = (blog['thumbnail'] ?? blog['image'] ?? blog['image_url'] ?? blog['gambar'] ?? '').toString();
+                  final thumbRaw = (blog['thumbnail'] ?? blog['image'] ?? blog['image_url'] ?? blog['gambar'] ?? '').toString();
+                  final thumb = _resolveMediaUrl(thumbRaw);
 
                   DateTime date = DateTime.now();
                   final rawDate = blog['created_at'] ?? blog['date'] ?? blog['tanggal'];
@@ -193,6 +218,30 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
   final ApiService _apiService = ApiService();
   late Future<Map> _future;
 
+  String _resolveMediaUrl(String input) {
+    final raw = input.trim();
+    if (raw.isEmpty) return '';
+
+    final normalized = raw.replaceAll('\\', '/');
+    if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+      return normalized.contains('%') ? normalized.replaceAll(' ', '%20') : Uri.encodeFull(normalized);
+    }
+
+    final origin = ApiService.baseUrl.replaceFirst(RegExp(r'\/api\/?$'), '');
+    String absolute;
+    if (normalized.startsWith('/')) {
+      absolute = '$origin$normalized';
+    } else if (normalized.startsWith('storage/')) {
+      absolute = '$origin/$normalized';
+    } else if (normalized.startsWith('public/storage/')) {
+      absolute = '$origin/${normalized.replaceFirst('public/', '')}';
+    } else {
+      absolute = '$origin/storage/$normalized';
+    }
+
+    return absolute.contains('%') ? absolute.replaceAll(' ', '%20') : Uri.encodeFull(absolute);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -238,7 +287,8 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
             final title = (blog['title'] ?? blog['judul'] ?? '-').toString();
             final content = (blog['content'] ?? blog['isi'] ?? blog['ringkasan'] ?? '').toString();
             final author = (blog['author'] ?? blog['penulis'] ?? '').toString();
-            final imageUrl = (blog['image'] ?? blog['image_url'] ?? blog['thumbnail'] ?? blog['gambar'] ?? '').toString();
+            final imageUrlRaw = (blog['image'] ?? blog['image_url'] ?? blog['thumbnail'] ?? blog['gambar'] ?? '').toString();
+            final imageUrl = _resolveMediaUrl(imageUrlRaw);
 
             DateTime date = DateTime.now();
             final rawDate = blog['created_at'] ?? blog['date'] ?? blog['tanggal'];
@@ -253,9 +303,8 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (imageUrl.isNotEmpty)
-                    SizedBox(
-                      height: 220,
-                      width: double.infinity,
+                    AspectRatio(
+                      aspectRatio: 16 / 9,
                       child: Image.network(
                         imageUrl,
                         fit: BoxFit.cover,

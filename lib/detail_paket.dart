@@ -8,10 +8,7 @@ import 'services/api_service.dart';
 class DetailPaketScreen extends StatefulWidget {
   final int packageId;
 
-  const DetailPaketScreen({
-    super.key,
-    required this.packageId,
-  });
+  const DetailPaketScreen({super.key, required this.packageId});
 
   @override
   State<DetailPaketScreen> createState() => _DetailPaketScreenState();
@@ -20,11 +17,52 @@ class DetailPaketScreen extends StatefulWidget {
 class _DetailPaketScreenState extends State<DetailPaketScreen> {
   final ApiService _apiService = ApiService();
   late Future<Map> _future;
+  Map<String, dynamic>? _currentPackage;
+  bool _isFavorite = false;
+  bool _favoriteLoaded = false;
 
   @override
   void initState() {
     super.initState();
     _future = _apiService.getPackageDetail(widget.packageId);
+    _loadFavorite();
+  }
+
+  Future<void> _loadFavorite() async {
+    final isFav = await _apiService.isFavoriteLocal(widget.packageId);
+    if (!mounted) return;
+    setState(() {
+      _isFavorite = isFav;
+      _favoriteLoaded = true;
+    });
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_isFavorite) {
+      await _apiService.removeLocalFavoriteByPackageId(widget.packageId);
+      if (!mounted) return;
+      setState(() => _isFavorite = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Dihapus dari favorit')));
+      return;
+    }
+
+    try {
+      final snapshot = _currentPackage;
+      final pkg = snapshot ?? <String, dynamic>{'id': widget.packageId};
+      await _apiService.addFavorite(widget.packageId, packageSnapshot: pkg);
+      if (!mounted) return;
+      setState(() => _isFavorite = true);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Ditambahkan ke favorit')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal menambah favorit: $e')));
+    }
   }
 
   int _asInt(dynamic v) {
@@ -35,7 +73,11 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final rupiah = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final rupiah = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -43,6 +85,13 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
         title: const Text('Detail Paket'),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            tooltip: _isFavorite ? 'Hapus dari favorit' : 'Tambah ke favorit',
+            onPressed: _favoriteLoaded ? _toggleFavorite : null,
+            icon: Icon(_isFavorite ? Icons.favorite : Icons.favorite_border),
+          ),
+        ],
       ),
       body: SafeArea(
         child: FutureBuilder<Map>(
@@ -57,12 +106,23 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
                     const SizedBox(height: 12),
-                    Text('Error: ${snapshot.error}', textAlign: TextAlign.center),
+                    Text(
+                      'Error: ${snapshot.error}',
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 12),
                     ElevatedButton(
-                      onPressed: () => setState(() => _future = _apiService.getPackageDetail(widget.packageId)),
+                      onPressed: () => setState(
+                        () => _future = _apiService.getPackageDetail(
+                          widget.packageId,
+                        ),
+                      ),
                       child: const Text('Coba Lagi'),
                     ),
                   ],
@@ -71,11 +131,23 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
             }
 
             final paket = snapshot.data ?? {};
+            _currentPackage = Map<String, dynamic>.from(paket);
             final name = (paket['name'] ?? paket['nama'] ?? '-').toString();
-            final location = (paket['location'] ?? paket['lokasi'] ?? '').toString();
-            final description = (paket['description'] ?? paket['deskripsi'] ?? '').toString();
-            final imageUrl = (paket['image'] ?? paket['image_url'] ?? paket['gambar'] ?? paket['photo'] ?? paket['thumbnail'] ?? '').toString();
-            final price = _asInt(paket['price'] ?? paket['harga'] ?? paket['amount'] ?? 0);
+            final location = (paket['location'] ?? paket['lokasi'] ?? '')
+                .toString();
+            final description =
+                (paket['description'] ?? paket['deskripsi'] ?? '').toString();
+            final imageUrl =
+                (paket['image'] ??
+                        paket['image_url'] ??
+                        paket['gambar'] ??
+                        paket['photo'] ??
+                        paket['thumbnail'] ??
+                        '')
+                    .toString();
+            final price = _asInt(
+              paket['price'] ?? paket['harga'] ?? paket['amount'] ?? 0,
+            );
 
             return Column(
               children: [
@@ -84,9 +156,8 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          height: 260,
-                          width: double.infinity,
+                        AspectRatio(
+                          aspectRatio: 16 / 9,
                           child: imageUrl.isNotEmpty
                               ? Image.network(
                                   imageUrl,
@@ -94,13 +165,25 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                                   errorBuilder: (context, error, stackTrace) {
                                     return Container(
                                       color: Colors.grey[300],
-                                      child: const Center(child: Icon(Icons.broken_image, size: 64, color: Colors.grey)),
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          size: 64,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
                                     );
                                   },
                                 )
                               : Container(
                                   color: Colors.grey[300],
-                                  child: const Center(child: Icon(Icons.image, size: 64, color: Colors.grey)),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.image,
+                                      size: 64,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ),
                         ),
                         Padding(
@@ -110,16 +193,28 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                             children: [
                               Text(
                                 name,
-                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               if (location.isNotEmpty) ...[
                                 const SizedBox(height: 8),
                                 Row(
                                   children: [
-                                    Icon(Icons.location_on, size: 18, color: Colors.grey[700]),
+                                    Icon(
+                                      Icons.location_on,
+                                      size: 18,
+                                      color: Colors.grey[700],
+                                    ),
                                     const SizedBox(width: 6),
                                     Expanded(
-                                      child: Text(location, style: TextStyle(color: Colors.grey[700])),
+                                      child: Text(
+                                        location,
+                                        style: TextStyle(
+                                          color: Colors.grey[700],
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -134,11 +229,21 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              const Text('Deskripsi Paket', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                              const Text(
+                                'Deskripsi Paket',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               const SizedBox(height: 8),
                               Text(
                                 description.isNotEmpty ? description : '-',
-                                style: TextStyle(fontSize: 15, color: Colors.grey[800], height: 1.5),
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.grey[800],
+                                  height: 1.5,
+                                ),
                               ),
                             ],
                           ),
@@ -161,7 +266,9 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
               onPressed: () async {
                 final snapshot = await _future;
                 final paket = snapshot;
-                final price = _asInt(paket['price'] ?? paket['harga'] ?? paket['amount'] ?? 0);
+                final price = _asInt(
+                  paket['price'] ?? paket['harga'] ?? paket['amount'] ?? 0,
+                );
                 final name = (paket['name'] ?? paket['nama'] ?? '-').toString();
 
                 final confirm = await showDialog<bool>(
@@ -170,8 +277,14 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                     title: const Text('Konfirmasi Booking'),
                     content: Text('Booking paket $name?'),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-                      ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Ya')),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Batal'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Ya'),
+                      ),
                     ],
                   ),
                 );
@@ -191,9 +304,14 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Book Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Book Now',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ),

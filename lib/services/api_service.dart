@@ -75,27 +75,33 @@ class ApiService {
       out['cover_image'] = _toAbsoluteUrl(coverImage);
     }
 
-    if ((out['photo'] == null || out['photo'].toString().trim().isEmpty) && (candidate ?? '').trim().isNotEmpty) {
+    if ((out['photo'] == null || out['photo'].toString().trim().isEmpty) &&
+        (candidate ?? '').trim().isNotEmpty) {
       out['photo'] = _toAbsoluteUrl(candidate);
     } else if (out['photo'] != null) {
       out['photo'] = _toAbsoluteUrl(out['photo']?.toString());
     }
 
     // Konsistensi field image_url juga sering dipakai di beberapa layar
-    if ((out['image_url'] == null || out['image_url'].toString().trim().isEmpty) && (out['photo']?.toString().trim().isNotEmpty ?? false)) {
+    if ((out['image_url'] == null ||
+            out['image_url'].toString().trim().isEmpty) &&
+        (out['photo']?.toString().trim().isNotEmpty ?? false)) {
       out['image_url'] = out['photo'];
     } else if (out['image_url'] != null) {
       out['image_url'] = _toAbsoluteUrl(out['image_url']?.toString());
     }
 
     // Beberapa layar lama mungkin pakai key `image` / `thumbnail`
-    if ((out['image'] == null || out['image'].toString().trim().isEmpty) && (out['photo']?.toString().trim().isNotEmpty ?? false)) {
+    if ((out['image'] == null || out['image'].toString().trim().isEmpty) &&
+        (out['photo']?.toString().trim().isNotEmpty ?? false)) {
       out['image'] = out['photo'];
     } else if (out['image'] != null) {
       out['image'] = _toAbsoluteUrl(out['image']?.toString());
     }
 
-    if ((out['thumbnail'] == null || out['thumbnail'].toString().trim().isEmpty) && (out['photo']?.toString().trim().isNotEmpty ?? false)) {
+    if ((out['thumbnail'] == null ||
+            out['thumbnail'].toString().trim().isEmpty) &&
+        (out['photo']?.toString().trim().isNotEmpty ?? false)) {
       out['thumbnail'] = out['photo'];
     } else if (out['thumbnail'] != null) {
       out['thumbnail'] = _toAbsoluteUrl(out['thumbnail']?.toString());
@@ -148,7 +154,9 @@ class ApiService {
       if (decoded is Map<String, dynamic>) return decoded;
       return <String, dynamic>{'data': decoded};
     } on FormatException {
-      throw FormatException('Response bukan JSON. Body: ${_bodySnippet(trimmed)}');
+      throw FormatException(
+        'Response bukan JSON. Body: ${_bodySnippet(trimmed)}',
+      );
     }
   }
 
@@ -167,7 +175,10 @@ class ApiService {
     return current;
   }
 
-  String _extractMessage(dynamic decoded, {String fallback = 'Terjadi kesalahan'}) {
+  String _extractMessage(
+    dynamic decoded, {
+    String fallback = 'Terjadi kesalahan',
+  }) {
     if (decoded is Map) {
       final msg = decoded['message'] ?? decoded['error'];
       if (msg is String && msg.trim().isNotEmpty) return msg;
@@ -182,7 +193,10 @@ class ApiService {
           final key = entry.key.toString();
           final val = entry.value;
           if (val is List) {
-            final msgs = val.map((e) => e.toString()).where((s) => s.trim().isNotEmpty).toList();
+            final msgs = val
+                .map((e) => e.toString())
+                .where((s) => s.trim().isNotEmpty)
+                .toList();
             if (msgs.isNotEmpty) {
               parts.add('$key: ${msgs.join(' ')}');
             }
@@ -232,23 +246,95 @@ class ApiService {
     return headers;
   }
 
+  // ========== LOCAL FAVORITES (fallback) ==========
+  // Backend favorit pada project ini tidak selalu menyediakan endpoint GET list.
+  // Untuk pengalaman UX yang stabil (terutama Flutter Web yang sering kena CORS),
+  // kita simpan favorit secara lokal sebagai fallback.
+  static const String _localFavoritesKey = 'local_favorites_packages';
+
+  Future<List<Map<String, dynamic>>> _readLocalFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = (prefs.getString(_localFavoritesKey) ?? '').trim();
+    if (raw.isEmpty) return <Map<String, dynamic>>[];
+
+    try {
+      final decoded = json.decode(raw);
+      if (decoded is! List) return <Map<String, dynamic>>[];
+      return decoded
+          .whereType<Map>()
+          .map((e) => _normalizePackage(Map<String, dynamic>.from(e)))
+          .toList();
+    } catch (_) {
+      return <Map<String, dynamic>>[];
+    }
+  }
+
+  Future<void> _writeLocalFavorites(
+    List<Map<String, dynamic>> favorites,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_localFavoritesKey, json.encode(favorites));
+  }
+
+  Future<bool> isFavoriteLocal(int packageId) async {
+    if (packageId <= 0) return false;
+    final favorites = await _readLocalFavorites();
+    return favorites.any(
+      (p) => (p['id']?.toString() ?? '') == packageId.toString(),
+    );
+  }
+
+  Future<void> upsertLocalFavorite(Map<String, dynamic> package) async {
+    final pkg = _normalizePackage(package);
+    final idStr = (pkg['id'] ?? '').toString();
+    final id = int.tryParse(idStr) ?? 0;
+    if (id <= 0) return;
+
+    final favorites = await _readLocalFavorites();
+    final idx = favorites.indexWhere(
+      (p) => (p['id']?.toString() ?? '') == id.toString(),
+    );
+    if (idx >= 0) {
+      favorites[idx] = pkg;
+    } else {
+      favorites.insert(0, pkg);
+    }
+    await _writeLocalFavorites(favorites);
+  }
+
+  Future<void> removeLocalFavoriteByPackageId(int packageId) async {
+    if (packageId <= 0) return;
+    final favorites = await _readLocalFavorites();
+    favorites.removeWhere(
+      (p) => (p['id']?.toString() ?? '') == packageId.toString(),
+    );
+    await _writeLocalFavorites(favorites);
+  }
+
   // ========== GET METHODS ==========
 
   // GET /favorites (dengan auth)
   // Beberapa backend memakai route singular: /favorite
   Future<List> getFavorites() async {
     try {
-      final paths = <String>['favorites', 'favorite'];
+      // Beberapa project menaruh route di bawah /api, sebagian lain langsung di root.
+      // Kita coba keduanya.
+      final candidates = <Uri>[
+        Uri.parse('$baseUrl/favorites'),
+        Uri.parse('$baseUrl/favorite'),
+        Uri.parse('$_serverOrigin/favorites'),
+        Uri.parse('$_serverOrigin/favorite'),
+      ];
 
-      for (final path in paths) {
-        final uri = Uri.parse('$baseUrl/$path');
+      for (final uri in candidates) {
         final response = await http.get(
           uri,
           headers: await getHeaders(withAuth: true),
         );
 
         // Hanya fallback jika endpoint benar-benar tidak ada.
-        if (response.statusCode == 404) {
+        // 405 juga kita anggap belum ada endpoint LIST (contoh: backend hanya punya POST/DELETE).
+        if (response.statusCode == 404 || response.statusCode == 405) {
           continue;
         }
 
@@ -262,17 +348,121 @@ class ApiService {
         if (response.statusCode == 200) {
           final decoded = _decodeJsonObject(response.body);
           final data = _unwrapData(decoded);
-          if (data is List) return data;
+          if (data is List) {
+            // Normalisasi jika backend mengembalikan wrapper favorit
+            // seperti { id, package: {...} } atau langsung objek paket.
+            return data.map((e) {
+              if (e is! Map) return e;
+              final m = Map<String, dynamic>.from(e);
+
+              for (final key in ['package', 'paket', 'tour_package']) {
+                final nested = m[key];
+                if (nested is Map) {
+                  m[key] = _normalizePackage(Map<String, dynamic>.from(nested));
+                  return m;
+                }
+              }
+
+              return _normalizePackage(m);
+            }).toList();
+          }
           return const [];
         } else {
           final decoded = _decodeJsonObject(response.body);
-          final message = _extractMessage(decoded, fallback: 'Gagal mengambil favorit');
+          final message = _extractMessage(
+            decoded,
+            fallback: 'Gagal mengambil favorit',
+          );
           throw Exception('$message (HTTP ${response.statusCode})');
         }
       }
-
-      throw Exception('Endpoint favorites tidak ditemukan (coba /favorites atau /favorite)');
+      // Jika semua kandidat route tidak tersedia untuk GET list (404/405), fallback ke lokal.
+      return await _readLocalFavorites();
     } catch (e) {
+      // Flutter Web sering melempar ClientException: Failed to fetch (CORS / server down).
+      // Dalam kasus itu, jangan crash halaman Favorit; tampilkan data lokal saja.
+      if (e is http.ClientException || e is SocketException) {
+        return await _readLocalFavorites();
+      }
+      throw Exception('Error: $e');
+    }
+  }
+
+  // POST /favorites (dengan auth)
+  // Backend bisa pakai route plural (/favorites) atau singular (/favorite).
+  // Jika endpoint tidak ada atau ter-block (CORS), kita tetap simpan favorit secara lokal.
+  Future<bool> addFavorite(
+    int packageId, {
+    Map<String, dynamic>? packageSnapshot,
+  }) async {
+    if (packageId <= 0) return false;
+
+    final payload = <String, dynamic>{
+      'package_id': packageId,
+      'tour_package_id': packageId,
+      'paket_id': packageId,
+    };
+
+    final candidates = <Uri>[
+      Uri.parse('$baseUrl/favorites'),
+      Uri.parse('$baseUrl/favorite'),
+      Uri.parse('$_serverOrigin/favorites'),
+      Uri.parse('$_serverOrigin/favorite'),
+    ];
+
+    try {
+      for (final uri in candidates) {
+        final response = await http.post(
+          uri,
+          headers: await getHeaders(withAuth: true),
+          body: json.encode(payload),
+        );
+
+        if (response.statusCode == 404 || response.statusCode == 405) {
+          continue;
+        }
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          // Simpan lokal juga agar list favorit tetap muncul walau GET list tidak ada.
+          if (packageSnapshot != null) {
+            await upsertLocalFavorite(packageSnapshot);
+          } else {
+            await upsertLocalFavorite(<String, dynamic>{'id': packageId});
+          }
+          return true;
+        }
+
+        if (_isJsonResponse(response)) {
+          final decoded = _decodeJsonObject(response.body);
+          final message = _extractMessage(
+            decoded,
+            fallback: 'Gagal menambah favorit',
+          );
+          throw Exception('$message (HTTP ${response.statusCode})');
+        }
+
+        throw Exception(
+          'Gagal menambah favorit (HTTP ${response.statusCode}). Body: ${_bodySnippet(response.body)}',
+        );
+      }
+
+      // Endpoint tidak ada untuk POST: simpan lokal saja.
+      if (packageSnapshot != null) {
+        await upsertLocalFavorite(packageSnapshot);
+      } else {
+        await upsertLocalFavorite(<String, dynamic>{'id': packageId});
+      }
+      return true;
+    } catch (e) {
+      // Jika ter-block di web, tetap simpan lokal.
+      if (e is http.ClientException || e is SocketException) {
+        if (packageSnapshot != null) {
+          await upsertLocalFavorite(packageSnapshot);
+        } else {
+          await upsertLocalFavorite(<String, dynamic>{'id': packageId});
+        }
+        return true;
+      }
       throw Exception('Error: $e');
     }
   }
@@ -281,10 +471,7 @@ class ApiService {
   Future<List> getPackages() async {
     try {
       final uri = Uri.parse('$baseUrl/packages');
-      final response = await http.get(
-        uri,
-        headers: await getHeaders(),
-      );
+      final response = await http.get(uri, headers: await getHeaders());
 
       if (!_isJsonResponse(response)) {
         throw Exception(
@@ -299,13 +486,20 @@ class ApiService {
         final data = _unwrapData(decoded);
         if (data is List) {
           return data
-              .map((e) => e is Map ? _normalizePackage(Map<String, dynamic>.from(e)) : e)
+              .map(
+                (e) => e is Map
+                    ? _normalizePackage(Map<String, dynamic>.from(e))
+                    : e,
+              )
               .toList();
         }
         return const [];
       } else {
         final decoded = _decodeJsonObject(response.body);
-        final message = _extractMessage(decoded, fallback: 'Gagal mengambil data paket');
+        final message = _extractMessage(
+          decoded,
+          fallback: 'Gagal mengambil data paket',
+        );
         throw Exception('$message (HTTP ${response.statusCode})');
       }
     } catch (e) {
@@ -317,10 +511,7 @@ class ApiService {
   Future<Map> getPackageDetail(int id) async {
     try {
       final uri = Uri.parse('$baseUrl/packages/$id');
-      final response = await http.get(
-        uri,
-        headers: await getHeaders(),
-      );
+      final response = await http.get(uri, headers: await getHeaders());
 
       if (!_isJsonResponse(response)) {
         throw Exception(
@@ -332,11 +523,16 @@ class ApiService {
       if (response.statusCode == 200) {
         final decoded = _decodeJsonObject(response.body);
         final data = _unwrapData(decoded);
-        if (data is Map) return _normalizePackage(Map<String, dynamic>.from(data));
+        if (data is Map) {
+          return _normalizePackage(Map<String, dynamic>.from(data));
+        }
         return <String, dynamic>{};
       } else {
         final decoded = _decodeJsonObject(response.body);
-        final message = _extractMessage(decoded, fallback: 'Gagal mengambil detail paket');
+        final message = _extractMessage(
+          decoded,
+          fallback: 'Gagal mengambil detail paket',
+        );
         throw Exception('$message (HTTP ${response.statusCode})');
       }
     } catch (e) {
@@ -359,7 +555,9 @@ class ApiService {
         return const [];
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal mengambil data blog'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal mengambil data blog'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -381,7 +579,9 @@ class ApiService {
         return <String, dynamic>{};
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal mengambil detail blog'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal mengambil detail blog'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -403,7 +603,9 @@ class ApiService {
         return const [];
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal mengambil data layanan'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal mengambil data layanan'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -425,7 +627,9 @@ class ApiService {
         return const [];
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal mengambil data testimoni'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal mengambil data testimoni'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -447,7 +651,12 @@ class ApiService {
         return const [];
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal mengambil data rekomendasi'));
+        throw Exception(
+          _extractMessage(
+            decoded,
+            fallback: 'Gagal mengambil data rekomendasi',
+          ),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -469,7 +678,9 @@ class ApiService {
         return const [];
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal mengambil data diskon'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal mengambil data diskon'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -491,7 +702,12 @@ class ApiService {
         return const [];
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal mengambil rekomendasi foto'));
+        throw Exception(
+          _extractMessage(
+            decoded,
+            fallback: 'Gagal mengambil rekomendasi foto',
+          ),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -513,7 +729,9 @@ class ApiService {
         return const [];
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal mengambil data pembayaran'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal mengambil data pembayaran'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -535,7 +753,9 @@ class ApiService {
         return <String, dynamic>{};
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal mengambil data user'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal mengambil data user'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -550,10 +770,7 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/login'),
         headers: await getHeaders(),
-        body: json.encode({
-          'email': email,
-          'password': password,
-        }),
+        body: json.encode({'email': email, 'password': password}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -609,7 +826,9 @@ class ApiService {
         return decoded;
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal membuat paket'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal membuat paket'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -632,7 +851,9 @@ class ApiService {
         return decoded;
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal membuat pembayaran'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal membuat pembayaran'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -665,7 +886,9 @@ class ApiService {
         return decoded;
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Upload foto gagal'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Upload foto gagal'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -689,7 +912,9 @@ class ApiService {
         return decoded;
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal mengirim testimoni'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal mengirim testimoni'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -743,7 +968,9 @@ class ApiService {
         return decoded;
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal update paket'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal update paket'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -766,7 +993,9 @@ class ApiService {
         return decoded;
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal update pembayaran'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal update pembayaran'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -779,16 +1008,20 @@ class ApiService {
   // Beberapa backend memakai route singular: /favorite/{id}
   Future<bool> deleteFavorite(int id) async {
     try {
-      final paths = <String>['favorites', 'favorite'];
+      final candidates = <Uri>[
+        Uri.parse('$baseUrl/favorites/$id'),
+        Uri.parse('$baseUrl/favorite/$id'),
+        Uri.parse('$_serverOrigin/favorites/$id'),
+        Uri.parse('$_serverOrigin/favorite/$id'),
+      ];
 
-      for (final path in paths) {
-        final uri = Uri.parse('$baseUrl/$path/$id');
+      for (final uri in candidates) {
         final response = await http.delete(
           uri,
           headers: await getHeaders(withAuth: true),
         );
 
-        if (response.statusCode == 404) {
+        if (response.statusCode == 404 || response.statusCode == 405) {
           continue;
         }
 
@@ -798,7 +1031,10 @@ class ApiService {
 
         if (_isJsonResponse(response)) {
           final decoded = _decodeJsonObject(response.body);
-          final message = _extractMessage(decoded, fallback: 'Gagal menghapus favorit');
+          final message = _extractMessage(
+            decoded,
+            fallback: 'Gagal menghapus favorit',
+          );
           throw Exception('$message (HTTP ${response.statusCode})');
         }
 
@@ -825,7 +1061,9 @@ class ApiService {
         return true;
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal menghapus paket'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal menghapus paket'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -844,7 +1082,9 @@ class ApiService {
         return true;
       } else {
         final decoded = _decodeJsonObject(response.body);
-        throw Exception(_extractMessage(decoded, fallback: 'Gagal menghapus pembayaran'));
+        throw Exception(
+          _extractMessage(decoded, fallback: 'Gagal menghapus pembayaran'),
+        );
       }
     } catch (e) {
       throw Exception('Error: $e');

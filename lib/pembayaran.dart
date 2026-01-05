@@ -46,8 +46,13 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
     final raw = uiValue.trim();
     if (raw.isEmpty) return '';
 
-    final parts = raw.split('-').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-    final provider = (parts.length >= 2 ? parts.last : parts.first).toLowerCase();
+    final parts = raw
+        .split('-')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    final provider = (parts.length >= 2 ? parts.last : parts.first)
+        .toLowerCase();
 
     // Normalisasi beberapa nama umum.
     if (provider.contains('go pay') || provider == 'go-pay') return 'gopay';
@@ -68,7 +73,11 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
   String _toApiCategoryMethod(String uiValue) {
     final raw = uiValue.trim();
     if (raw.isEmpty) return '';
-    final parts = raw.split('-').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    final parts = raw
+        .split('-')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
     final category = (parts.isNotEmpty ? parts.first : raw).toLowerCase();
 
     if (category.startsWith('transfer')) {
@@ -180,9 +189,9 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
         if (lastError != null) throw lastError;
       } catch (e) {
         if (mounted) Navigator.pop(context); // tutup loading
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal bayar: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal bayar: $e')));
         return;
       }
 
@@ -215,214 +224,236 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
         backgroundColor: Colors.blue[700],
         foregroundColor: Colors.white,
       ),
-      body: Column(
-        children: [
-          // Ringkasan Pembayaran
-          Container(
-            margin: const EdgeInsets.all(20),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Ringkasan Pembayaran',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const Divider(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Destinasi:'),
-                    Flexible(
-                      child: Text(
-                        widget.namaTempat,
-                        textAlign: TextAlign.right,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Ringkasan Pembayaran
+            Container(
+              margin: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.2),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Ringkasan Pembayaran',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const Divider(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Destinasi:'),
+                      const SizedBox(width: 12),
+                      Flexible(
+                        child: Text(
+                          widget.namaTempat,
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Jumlah Orang:'),
+                      Text(
+                        '${widget.jumlahOrang} orang',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Jumlah Orang:'),
-                    Text(
-                      '${widget.jumlahOrang} orang',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const Divider(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Total Pembayaran:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    ],
+                  ),
+                  const Divider(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Total Pembayaran:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    Text(
-                      formatRupiah(widget.totalHarga),
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[700],
+                      Text(
+                        formatRupiah(widget.totalHarga),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[700],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Pilih Metode Pembayaran
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Pilih Metode Pembayaran',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-
-          // List Metode Pembayaran
-          Expanded(
-            child: ListView(
+            // Pilih Metode Pembayaran
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              children: kategoriMetode.entries.map((entry) {
-                final kategori = entry.key;
-                final subMetode = entry.value;
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Pilih Metode Pembayaran',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  child: ExpansionTile(
-                    title: Text(
-                      kategori,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    children: subMetode.map((sub) {
-                      final value = '$kategori - ${sub['nama']}';
-                      return RadioListTile<String>(
-                        value: value,
-                        groupValue: metodePembayaran,
-                        onChanged: (val) {
-                          setState(() {
-                            metodePembayaran = val!;
-                          });
-                        },
-                        title: Text(sub['nama']),
-                        secondary: Icon(sub['icon'], color: Colors.blue[700]),
-                        activeColor: Colors.blue[700],
-                      );
-                    }).toList(),
-                  ),
-                );
-              }).toList(),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-      // Tombol Bayar
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, -3),
+
+            // List Metode Pembayaran
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                children: kategoriMetode.entries.map((entry) {
+                  final kategori = entry.key;
+                  final subMetode = entry.value;
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ExpansionTile(
+                      title: Text(
+                        kategori,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      children: subMetode.map((sub) {
+                        final nama = (sub['nama'] ?? '').toString();
+                        final icon = sub['icon'] as IconData?;
+                        final label = '$kategori - $nama';
+
+                        return RadioListTile<String>(
+                          value: label,
+                          groupValue: metodePembayaran,
+                          onChanged: (value) {
+                            setState(() {
+                              metodePembayaran = value ?? '';
+                            });
+                          },
+                          title: Text(nama),
+                          secondary: Icon(icon, color: Colors.blue[700]),
+                          activeColor: Colors.blue[700],
+                        );
+                      }).toList(),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
           ],
         ),
-        child: SizedBox(
-          height: 50,
-          child: ElevatedButton(
-            onPressed: () async {
-              if (metodePembayaran.isEmpty) {
-                // Tampilkan bottomsheet untuk pilih metode
-                showModalBottomSheet(
-                  context: context,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  builder: (BuildContext context) {
-                    return Container(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'Pilih Metode Pembayaran',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'Silakan pilih metode pembayaran terlebih dahulu dari daftar di atas',
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue[700],
-                              minimumSize: const Size(double.infinity, 45),
-                            ),
-                            child: const Text('OK'),
-                          ),
-                        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.3),
+                spreadRadius: 2,
+                blurRadius: 5,
+                offset: const Offset(0, -3),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            height: 50,
+            child: ElevatedButton(
+              onPressed: () async {
+                if (metodePembayaran.isEmpty) {
+                  showModalBottomSheet(
+                    context: context,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(20),
                       ),
-                    );
-                  },
-                );
-              } else {
+                    ),
+                    builder: (BuildContext context) {
+                      return SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              const Text(
+                                'Pilih Metode Pembayaran',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Silakan pilih metode pembayaran terlebih dahulu dari daftar di atas',
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 45,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue[700],
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text('OK'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                  return;
+                }
+
                 await prosesPembayaran();
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue[700],
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue[700],
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Bayar Sekarang',
+                style: TextStyle(fontSize: 18),
               ),
             ),
-            child: const Text('Bayar Sekarang', style: TextStyle(fontSize: 18)),
           ),
         ),
       ),
