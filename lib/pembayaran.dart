@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'konfirmasi_pembayaran.dart';
 import 'services/api_service.dart';
+import 'e_tiket.dart';
 
 // Halaman Pembayaran
 class PembayaranScreen extends StatefulWidget {
@@ -12,6 +12,8 @@ class PembayaranScreen extends StatefulWidget {
   final String? bookingCode;
   final String? imageUrl;
   final int? jumlahHari;
+  final String? namaPemesan;
+  final String? email;
 
   const PembayaranScreen({
     super.key,
@@ -23,6 +25,8 @@ class PembayaranScreen extends StatefulWidget {
     this.bookingCode,
     this.imageUrl,
     this.jumlahHari,
+    this.namaPemesan,
+    this.email,
   });
 
   @override
@@ -185,20 +189,18 @@ class _PembayaranScreenState extends State<PembayaranScreen> {
       if (mounted) Navigator.pop(context); // tutup loading
     }
 
-    // Navigasi ke konfirmasi pembayaran
-    Navigator.push(
+    // Setelah bayar sukses, langsung ke E-Tiket (sesuai flow yang diminta).
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => KonfirmasiPembayaranScreen(
+        builder: (_) => ETiketScreen(
           namaTempat: widget.namaTempat,
-          metodePembayaran: metodePembayaran,
           totalHarga: widget.totalHarga,
           tanggalLabel: widget.tanggalLabel,
           jumlahOrang: widget.jumlahOrang,
           paymentId: widget.paymentId,
           bookingCode: widget.bookingCode,
-          imageUrl: widget.imageUrl,
-          jumlahHari: widget.jumlahHari,
+          namaPemesan: widget.namaPemesan,
         ),
       ),
     );

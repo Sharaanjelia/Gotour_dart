@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'home.dart';
 
 class ETiketScreen extends StatelessWidget {
   final String namaTempat;
@@ -281,6 +282,32 @@ class ETiketScreen extends StatelessWidget {
                                               color: Colors.white,
                                             ),
                                           ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 20),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 50,
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pushAndRemoveUntil(
+                                            context,
+                                            MaterialPageRoute(builder: (_) => const HomeScreen()),
+                                            (route) => false,
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF667EEA),
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Kembali ke Beranda',
+                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                         ),
                                       ),
                                     ),
